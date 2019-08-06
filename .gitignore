@@ -1,0 +1,6 @@
+*.swp
+*.pyc
+.ipynb_checkpoints
+*style_file*.html
+*.pdf
+*.png
