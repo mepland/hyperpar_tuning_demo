@@ -19,9 +19,10 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 # from sklearn.metrics import log_loss
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 from time import time
+import json
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -35,13 +36,26 @@ n_folds = 3
 
 
 # Utility function to report best scores from sklearn searches
-def report(results, n_top=2):
+def report(results, n_top=5):
+    results = results.cv_results_
     for i in range(1, n_top+1):
         candidates = np.flatnonzero(results['rank_test_score'] == i)
         for candidate in candidates:
             print(f'Model with rank: {i}')
             print(f"Mean validation score: {results['mean_test_score'][candidate]:.3f} (std: {results['std_test_score'][candidate]:.3f})")
             print('Parameters: {0}\n'.format(results['params'][candidate]))
+
+
+# Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
+# See the [documentation](https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object) for details.
+
+# In[ ]:
+
+
+def xgb_early_stopping_auc_scorer(model, X, y):
+    y_pred = model.predict_proba(X, ntree_limit=model.best_ntree_limit)
+    y_pred_sig = y_pred[:,1]
+    return roc_auc_score(y, y_pred_sig)
 
 
 # ## Load Polish Companies Bankruptcy Data
@@ -53,6 +67,14 @@ def report(results, n_top=2):
 data = arff.loadarff('./data/1year.arff')
 df = pd.DataFrame(data[0])
 df['class'] = df['class'].apply(int, args=(2,))
+
+
+# In[ ]:
+
+
+# Real feature names
+with open ('./attrs.json') as json_file:
+    attrs_dict = json.load(json_file)
 
 
 # Setup Target and Features
@@ -74,6 +96,7 @@ y = df[target].values
 
 X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, random_state=rnd_seed, stratify=y)
 X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.2, random_state=rnd_seed+1, stratify=y_tmp)
+del X_tmp; del y_tmp
 
 
 # Prepare Stratified k-Folds
@@ -90,12 +113,12 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 # In[ ]:
 
 
-max_num_boost_rounds = 200
+max_num_boost_rounds = 200 # maximum number of boosting rounds to run / trees to create
 num_early_stopping_rounds = 10 # must see improvement over last num_early_stopping_rounds or will halt
 xgb_objective = 'binary:logistic'
 xgb_verbosity = 0 #  The degree of verbosity. Valid values are 0 (silent) - 3 (debug).
 xgb_n_jobs = 1 # Number of parallel threads used to run XGBoost. -1 makes use of all cores in your system
-search_scoring = 'roc_auc'
+# search_scoring = 'roc_auc' # need to use custom function to work properly with xgb early stopping, see xgb_early_stopping_auc_scorer
 search_n_jobs = 2 # Number of parallel threads used to run hyperparameter searches
 search_verbosity = 1
 
@@ -131,10 +154,10 @@ param_dists = {
 # In[ ]:
 
 
-search_n_iter=20
+search_n_iter=50
 model_rs = xgb.XGBClassifier(n_estimators=max_num_boost_rounds, objective=xgb_objective, verbosity=xgb_verbosity)
 
-rs = RandomizedSearchCV(estimator=model_rs, param_distributions=param_dists, scoring=search_scoring,
+rs = RandomizedSearchCV(estimator=model_rs, param_distributions=param_dists, scoring=xgb_early_stopping_auc_scorer,
                         n_iter=search_n_iter, n_jobs=search_n_jobs, cv=skf, verbose=search_verbosity, random_state=rnd_seed+3
                        )
 
@@ -142,24 +165,84 @@ rs = RandomizedSearchCV(estimator=model_rs, param_distributions=param_dists, sco
 # In[ ]:
 
 
-start = time()
+rs_start = time()
 
 rs.fit(X_train, y_train, groups=None, **fixed_fit_params)
 
-print(f'RandomizedSearchCV took {(time()-start):.2f} seconds for {search_n_iter} candidates parameter settings')
+rs_time = time()-rs_start
+
+print(f'RandomizedSearchCV took {rs_time:.2f} seconds for {search_n_iter} candidates parameter settings')
 
 
 # In[ ]:
 
 
-report(rs.cv_results_)
+report(rs)
+
+
+# In[ ]:
+
+
+# search time, best model, best params, for later comparison
+# rs_time
+# rs.best_estimator_
+# rs.best_params_
 
 
 # # Grid Search TODO
 
 # # Bayesian Optimization TODO
 
+# # Dev
+
+# In[ ]:
+
+
+# stand alone
+model = xgb.XGBClassifier(max_depth=6, verbosity=0)
+model.fit(X_train, y_train, early_stopping_rounds=num_early_stopping_rounds, eval_set=[(X_val, y_val)], eval_metric='logloss')
+y_test_pred = model.predict_proba(X_test, ntree_limit=model.best_ntree_limit)[:,1]
+
+
+# In[ ]:
+
+
+# best from rs
+model = rs.best_estimator_
+y_test_pred = model.predict_proba(X_test, ntree_limit=model.best_ntree_limit)[:,1]
+
+
 # # Evaluate Performance TODO
+
+# In[ ]:
+
+
+def plot_y_pred(y_pred, y):
+    fig, ax = plt.subplots()
+
+    sig_mask = np.where(y == 1)
+    bkg_mask = np.where(y == 0)
+
+    plt.hist(y_pred[sig_mask], bins=np.linspace(0,1,11), histtype='step', color='C0', label='Signal')
+    plt.hist(y_pred[bkg_mask], bins=np.linspace(0,1,11), histtype='step', color='C1', label='Background')
+
+    leg = ax.legend(loc='upper right',frameon=False)
+    leg.get_frame().set_facecolor('none')
+    ax.set_yscale('log')
+
+    ax.set_xlabel('$\hat{y}$')
+    ax.set_ylabel('Counts')
+    ax.set_xlim([0.,1.])
+
+    plt.show()
+    # fig.savefig('roc.pdf')
+
+
+# In[ ]:
+
+
+plot_y_pred(y_test_pred, y_test)
+
 
 # In[ ]:
 
@@ -172,7 +255,7 @@ fpr, tpr, thr = roc_curve(y_test, y_test_pred)
 
 def plot_roc(fpr, tpr, rndGuess=True, grid=False, better_ann=True):
     fig, ax = plt.subplots()
-    
+
     label=f'AUC {auc(fpr,tpr):.4f}'
 
     ax.plot(fpr, tpr, lw=2, c='C0', ls='-', label=label)
@@ -180,7 +263,7 @@ def plot_roc(fpr, tpr, rndGuess=True, grid=False, better_ann=True):
     if rndGuess:
         x = np.linspace(0., 1.)
         ax.plot(x, x, color='grey', linestyle=':', linewidth=2, label='Random Guess')
-        
+
     if grid:
         ax.grid()
 
@@ -196,7 +279,7 @@ def plot_roc(fpr, tpr, rndGuess=True, grid=False, better_ann=True):
         plt.text(-0.08, 1.08, 'Better', size=12, rotation=45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
 
     plt.show()
-    fig.savefig('roc.pdf')
+    # fig.savefig('roc.pdf')
 
 
 # In[ ]:
