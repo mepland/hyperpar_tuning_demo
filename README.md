@@ -1,17 +1,21 @@
-# Hyperpar Tuning Demo
-Matthew Epland  
+# Hyperparameter Tuning Demo
+Matthew Epland, PhD  
+[Komodo Health](https://www.komodohealth.com/)  
 [phy.duke.edu/~mbe9](http://www.phy.duke.edu/~mbe9)  
+
+A demonstration of hyperparameter tuning with XGBoost and Scikit Learn.  
 
 ## Cloning the Repository
 ssh  
 ```bash
-TODO
+git clone git@github.com:mepland/hyperpar_tuning_demo.git
 ```
 
 https  
 ```bash
-TODO
+git clone https://github.com/mepland/hyperpar_tuning_demo.git
 ```
+
 ## Installing Dependencies
 It is recommended to work in a [python virtual environment](https://realpython.com/python-virtual-environments-a-primer/) to avoid clashes with other installed software.
 ```bash
