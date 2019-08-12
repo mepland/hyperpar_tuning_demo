@@ -2,18 +2,29 @@
 # coding: utf-8
 
 # # Hyperparameter Tuning Demo
-# ### Matthew Epland
+# ### Matthew Epland, PhD
 # Partially adapted from the [sklearn documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
 
 # In[ ]:
 
 
+get_ipython().run_line_magic('load_ext', 'autoreload')
+get_ipython().run_line_magic('autoreload', '2')
+
+########################################################
+# python
 import pandas as pd
 import numpy as np
+import warnings
+from time import time
+# from copy import copy
+import json
 
 from scipy.io import arff
 from scipy.stats import randint, uniform
 
+########################################################
+# xgboost, sklearn
 import xgboost as xgb
 
 from sklearn.model_selection import train_test_split, StratifiedKFold
@@ -21,8 +32,12 @@ from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 # from sklearn.metrics import log_loss
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 
-from time import time
-import json
+########################################################
+# xkopt
+from skopt import Optimizer
+from skopt.learning import GaussianProcessRegressor
+from skopt.learning import RandomForestRegressor
+from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -30,6 +45,12 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 
 rnd_seed = 11
 n_folds = 3
+
+
+# In[ ]:
+
+
+from plotting import * # load plotting code from plotting.py
 
 
 # In[ ]:
@@ -53,6 +74,8 @@ def report(results, n_top=5):
 
 
 def xgb_early_stopping_auc_scorer(model, X, y):
+    # predict_proba may not be thread safe, so copy the object - unfortunetly getting crashes so just use the original object
+    # model = copy.copy(model_in)
     y_pred = model.predict_proba(X, ntree_limit=model.best_ntree_limit)
     y_pred_sig = y_pred[:,1]
     return roc_auc_score(y, y_pred_sig)
@@ -86,7 +109,7 @@ target='class'
 features = sorted(list(set(df.columns)-set([target])))
 
 
-# Make Train, Validation, and Test Sets
+# Make Train, Validation, and Holdout Sets
 
 # In[ ]:
 
@@ -94,7 +117,7 @@ features = sorted(list(set(df.columns)-set([target])))
 X = df[features].values
 y = df[target].values
 
-X_tmp, X_test, y_tmp, y_test = train_test_split(X, y, test_size=0.2, random_state=rnd_seed, stratify=y)
+X_tmp, X_holdout, y_tmp, y_holdout = train_test_split(X, y, test_size=0.2, random_state=rnd_seed, stratify=y)
 X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.2, random_state=rnd_seed+1, stratify=y_tmp)
 del X_tmp; del y_tmp
 
@@ -107,17 +130,54 @@ del X_tmp; del y_tmp
 skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 
 
-# ## Set Hyperparameter Rangess
+# ## Set Hyperparameter Ranges
 # #### See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
 
 # In[ ]:
 
 
-max_num_boost_rounds = 200 # maximum number of boosting rounds to run / trees to create
-num_early_stopping_rounds = 10 # must see improvement over last num_early_stopping_rounds or will halt
-xgb_objective = 'binary:logistic'
-xgb_verbosity = 0 #  The degree of verbosity. Valid values are 0 (silent) - 3 (debug).
-xgb_n_jobs = 1 # Number of parallel threads used to run XGBoost. -1 makes use of all cores in your system
+param_defaults_and_ranges = {
+    'max_depth': {'default': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [4, 5, 6, 7, 8]},
+        # default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
+    'learning_rate': {'default': 0.3, 'range': (0.05, 0.9), 'dist': uniform(0.05, 0.9), 'grid': [0.05, 0.1, 0.3, 0.4]},
+        # default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate
+    'min_child_weight': {'default': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 2.]},
+        # default=1, Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression task, this simply corresponds to minimum number of instances needed to be in each node. The larger min_child_weight is, the more conservative the algorithm will be.
+    'gamma': {'default': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0, 1, 2]},
+        # default=0, Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger gamma is, the more conservative the algorithm will be. alias: min_split_loss
+    # 'max_delta_step': {'default': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 2.]},
+        # default=0, Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
+    # 'reg_alpha': {'default': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3.]},
+        # default=0, L1 regularization term on weights. Increasing this value will make model more conservative.
+    # 'reg_lambda': {'default': 1., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3]},
+        # default=1, L2 regularization term on weights. Increasing this value will make model more conservative.
+    # 'colsample_bytree': {'default': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.]},
+        # default=1, Subsample ratio of columns when constructing each tree.
+    # 'subsample': {'default': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.]},
+        # default=1, Subsample ratio of the training instances. Setting it to 0.5 means that XGBoost would randomly sample half of the training data prior to growing trees. and this will prevent overfitting. Subsampling will occur once in every boosting iteration.
+}
+
+param_defaults = {}
+param_dists = {}
+param_grids = {}
+for k,v in param_defaults_and_ranges.items():
+    param_defaults[k] = v['default']
+    param_dists[k] = v['dist']
+    param_grids[k] = v['grid']
+
+
+# #### Set other fixed hyperparameters
+
+# In[ ]:
+
+
+fixed_setup_params = {
+'max_num_boost_rounds': 500, # maximum number of boosting rounds to run / trees to create
+'xgb_objective': 'binary:logistic', # objective function for binary classification
+'xgb_verbosity': 0, #  The degree of verbosity. Valid values are 0 (silent) - 3 (debug).
+'xgb_n_jobs': 1, # Number of parallel threads used to run XGBoost. -1 makes use of all cores in your system
+}
+
 # search_scoring = 'roc_auc' # need to use custom function to work properly with xgb early stopping, see xgb_early_stopping_auc_scorer
 search_n_jobs = 2 # Number of parallel threads used to run hyperparameter searches
 search_verbosity = 1
@@ -127,26 +187,34 @@ search_verbosity = 1
 
 
 fixed_fit_params = {
-    'early_stopping_rounds': num_early_stopping_rounds,
-    'eval_set': [(X_val, y_val)],
-    'eval_metric': 'logloss',
+    'early_stopping_rounds': 10, # must see improvement over last num_early_stopping_rounds or will halt
+    'eval_set': [(X_val, y_val)], # data sets to use for early stopping evaluation
+    'eval_metric': 'logloss', # evaluation metric for early stopping
+    'verbose': False, # even more verbosity control
 }
 
+
+# #### Setup XGBClassifier
 
 # In[ ]:
 
 
-param_dists = {
-    'max_depth': randint(3, 10), # default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
-    'min_child_weight': uniform(1.0, 5.0), # default=1, Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression task, this simply corresponds to minimum number of instances needed to be in each node. The larger min_child_weight is, the more conservative the algorithm will be.
-    'learning_rate': uniform(0.05, 1.0), # default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate
-    # 'gamma': uniform(1, 5), # default=0, Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger gamma is, the more conservative the algorithm will be. alias: min_split_loss
-    # 'colsample_bytree': uniform(0.5, 1.0), # default=1, Subsample ratio of columns when constructing each tree.
-    # 'subsample': uniform(0.5, 1.0), # default=1, Subsample ratio of the training instances. Setting it to 0.5 means that XGBoost would randomly sample half of the training data prior to growing trees. and this will prevent overfitting. Subsampling will occur once in every boosting iteration.
-    # 'max_delta_step': uniform(0.0, 5.0), # default=0, Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
-    # 'reg_alpha': uniform(0.0, 5.0), # default=0, L1 regularization term on weights. Increasing this value will make model more conservative.
-    # 'reg_lambda': uniform(0.0, 5.0), # default=1, L2 regularization term on weights. Increasing this value will make model more conservative.
-}
+xgb_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
+                              objective=fixed_setup_params['xgb_objective'],
+                              verbosity=fixed_setup_params['xgb_verbosity'],
+                              random_state=rnd_seed+3)
+
+
+# #### Run with default hyperparameters as a baseline
+
+# In[ ]:
+
+
+model_default = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
+                                  objective=fixed_setup_params['xgb_objective'],
+                                  verbosity=fixed_setup_params['xgb_verbosity'],
+                                  random_state=rnd_seed+3, **param_defaults)
+model_default.fit(X_train, y_train, **fixed_fit_params);
 
 
 # # Random Search
@@ -154,11 +222,10 @@ param_dists = {
 # In[ ]:
 
 
-search_n_iter=50
-model_rs = xgb.XGBClassifier(n_estimators=max_num_boost_rounds, objective=xgb_objective, verbosity=xgb_verbosity)
+rs_n_iter = 1
 
-rs = RandomizedSearchCV(estimator=model_rs, param_distributions=param_dists, scoring=xgb_early_stopping_auc_scorer,
-                        n_iter=search_n_iter, n_jobs=search_n_jobs, cv=skf, verbose=search_verbosity, random_state=rnd_seed+3
+rs = RandomizedSearchCV(estimator=xgb_model, param_distributions=param_dists, scoring=xgb_early_stopping_auc_scorer,
+                        n_iter=rs_n_iter, n_jobs=search_n_jobs, cv=skf, verbose=search_verbosity, random_state=rnd_seed+4
                        )
 
 
@@ -171,7 +238,7 @@ rs.fit(X_train, y_train, groups=None, **fixed_fit_params)
 
 rs_time = time()-rs_start
 
-print(f'RandomizedSearchCV took {rs_time:.2f} seconds for {search_n_iter} candidates parameter settings')
+print(f'RandomizedSearchCV took {rs_time:.2f} seconds for {rs_n_iter} candidates parameter settings')
 
 
 # In[ ]:
@@ -184,106 +251,311 @@ report(rs)
 
 
 # search time, best model, best params, for later comparison
-# rs_time
-# rs.best_estimator_
-# rs.best_params_
+# print(rs_time)
+# print(rs.best_estimator_)
+# print(rs.best_params_)
 
 
-# # Grid Search TODO
-
-# # Bayesian Optimization TODO
-
-# # Dev
+# # Grid Search
 
 # In[ ]:
 
 
-# stand alone
-model = xgb.XGBClassifier(max_depth=6, verbosity=0)
-model.fit(X_train, y_train, early_stopping_rounds=num_early_stopping_rounds, eval_set=[(X_val, y_val)], eval_metric='logloss')
-y_test_pred = model.predict_proba(X_test, ntree_limit=model.best_ntree_limit)[:,1]
+gs = GridSearchCV(estimator=xgb_model, param_grid=param_grids, scoring=xgb_early_stopping_auc_scorer,
+                  n_jobs=search_n_jobs, cv=skf, verbose=search_verbosity # , iid=False
+                 )
 
 
 # In[ ]:
 
 
-# best from rs
-model = rs.best_estimator_
-y_test_pred = model.predict_proba(X_test, ntree_limit=model.best_ntree_limit)[:,1]
+gs_start = time()
 
+gs.fit(X_train, y_train, groups=None, **fixed_fit_params)
+
+gs_time = time()-gs_start
+
+print(f"GridSearchCV took {gs_time:.2f} seconds for {len(gs.cv_results_['params'])} candidates parameter settings")
+
+
+# In[ ]:
+
+
+report(gs)
+
+
+# In[ ]:
+
+
+# search time, best model, best params, for later comparison
+# print(gs_time)
+# print(gs.best_estimator_)
+# print(gs.best_params_)
+
+
+# # Bayesian Optimization
+
+# In[ ]:
+
+
+n_initial_points = 20
+acq_func='EI'
+
+
+# In[ ]:
+
+
+# make _BO train and val sets from regular train set, will use these for early stopping and regular val set for testing while iterating in the BOs
+X_train_BO, X_val_BO, y_train_BO, y_val_BO = train_test_split(X_train, y_train, test_size=0.2, random_state=rnd_seed+5, stratify=y_train)
+
+
+# In[ ]:
+
+
+# break out the params_to_be_opt, and their ranges (dimensions), and defaults
+params_to_be_opt = []
+dimensions = []
+for k,v in param_defaults_and_ranges.items():
+    params_to_be_opt.append(k)
+    dimensions.append(v['range'])
+
+# make helper param index dict
+param_index_dict = {}
+for iparam, param in enumerate(params_to_be_opt):
+    param_index_dict[param] = iparam
+
+
+# In[ ]:
+
+
+def run_bo(bo_opt, bo_n_iter, ann_text, m_path, tag, params_initial=None, y_initial=None, print_interval=5):
+
+    # setup the function to be optimized
+    def target_function(params):
+        # returns negative auc of trained model, since Optimizer only minimizes
+        model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'], objective=fixed_setup_params['xgb_objective'], verbosity=fixed_setup_params['xgb_verbosity'], random_state=rnd_seed+6, **params)
+        model.fit(X_train_BO, y_train_BO, early_stopping_rounds=fixed_fit_params['early_stopping_rounds'], eval_set=[(X_val_BO, y_val_BO)], eval_metric=fixed_fit_params['eval_metric'], verbose=fixed_fit_params['verbose'])
+
+        best_ntree_limit = model.best_ntree_limit
+        if best_ntree_limit >= fixed_setup_params['max_num_boost_rounds']:
+            print(f"Hit max_num_boost_rounds = {fixed_setup_params['max_num_boost_rounds']:d}, model.best_ntree_limit = {best_ntree_limit:d}")
+
+        return -xgb_early_stopping_auc_scorer(model, X_val, y_val)
+
+    iter_results = []
+    if params_initial is not None and y_initial is not None:
+        # update bo_opt with the initial / default point, might as well since we have already computed it!
+        x_initial = [params_initial[param] for param in params_to_be_opt]
+        bo_opt.tell(x_initial, y_initial)
+
+        iter_results.append({'iter':0, 'y':y_initial, 'auc':-y_initial, 'x': str(x_initial)})
+
+    # we'll print these warnings ourselves
+    warnings.filterwarnings('ignore', message='The objective has been evaluated at this point before.')
+
+    # run it
+    for i_iter in range(1,bo_n_iter):
+        is_last = False
+        if i_iter+1 == bo_n_iter:
+            is_last = True
+
+        print_this_i = False
+        if is_last or (print_interval !=0 and (print_interval < 0 or (print_interval > 0 and i_iter % print_interval == 0))):
+            print_this_i = True
+            print(f'Starting iteration {i_iter:d}')
+
+        # get next test point x, ie a new point beta in parameter space
+        x = bo_opt.ask()
+
+        is_repeat = False
+        if x in bo_opt.Xi:
+            is_repeat = True
+            # we have already evaluated target_function at this point! Pull old value, give it back and continue.
+            # not very elegant, might still get a warning from Optimizer, but at least is MUCH faster than recomputing target_function...
+            past_i_iter = bo_opt.Xi.index(x)
+            y = bo_opt.yi[past_i_iter] # get from bo_opt array to be sure it's the right one
+
+            print('Already evaluated at this x (params below)! Just using the old result for y and continuing!')
+            print(x)
+
+        else:
+            # run the training and predictions for the test point
+            params = {}
+            for param,value in zip(params_to_be_opt,x):
+                params[param] = value
+            y = target_function(params)
+        # update bo_opt with the result for the test point
+        bo_opt.tell(x, y)
+
+        # save to df
+        iter_result = {'iter':i_iter, 'y':y, 'auc':-y, 'x': str(x)}
+        for param,value in zip(params_to_be_opt,x):
+            iter_result[param] = value
+        iter_results.append(iter_result)
+
+        # see if it is a min
+        is_best = False
+        if i_iter != 0 and y == np.array(bo_opt.yi).min():
+            is_best = True
+
+        # print messages and plots while still running
+        if print_this_i or is_last or (is_best and not is_repeat):
+            if is_best:
+                print('Found a new optimum set of hyper parameters!')
+            print(x)
+            print(f'y: {y:.5f}')
+
+            df_tmp = pd.DataFrame.from_dict(iter_results)
+
+            y_best_tmp = df_tmp['y'].min()
+            i_x_bests = df_tmp.index[df_tmp['y'] == y_best_tmp].tolist()
+            x_bests = df_tmp.iloc[i_x_bests]['x'].tolist()
+
+            plot_bo_opt_convergence(df_tmp['y'], '$y$', x_bests, ann_text, m_path, 'convergence_y', tag=tag, y_initial=y_initial, do_min=True)
+
+    # print best values
+    yi = np.array(bo_opt.yi)
+    y_best = yi.min()
+    x_best_indices = np.where(yi == y_best)
+    x_best_indices = x_best_indices[0]
+
+    best_params_points_list = []
+    for this_x_best_index in x_best_indices:
+        this_x_best = bo_opt.Xi[this_x_best_index]
+
+        this_x_best_params = {}
+        this_x_best_params['iter'] = this_x_best_index
+        for param in params_to_be_opt:
+            this_x_best_params[param] = this_x_best[param_index_dict[param]]
+
+        best_params_points_list.append(this_x_best_params)
+
+    # save best results to csv
+    df_best_params_points = pd.DataFrame.from_dict(best_params_points_list)
+    df_best_params_points = df_best_params_points.drop_duplicates(subset=params_to_be_opt).reset_index(drop=True)
+    df_best_params_points = df_best_params_points.sort_values(by=params_to_be_opt).reset_index(drop=True)
+    df_best_params_points = df_best_params_points[['iter']+params_to_be_opt]
+
+    df_best_params_points.to_csv(f'{m_path}/best_params_points{tag}.csv', index=False, na_rep='nan')
+
+    # save iter results to csv
+    df_iter_results = pd.DataFrame.from_dict(iter_results)
+    fixed_cols = ['iter', 'y', 'auc']
+    cols = fixed_cols + list(set(df_iter_results.columns)-set(fixed_cols))
+    df_iter_results = df_iter_results[cols]
+    df_iter_results = df_iter_results.sort_values(by='iter').reset_index(drop=True)
+    df_iter_results.to_csv(f'{m_path}/iter_results{tag}.csv', index=False, na_rep='nan')
+
+    n_best_params_points = len(df_best_params_points)
+
+    print('Best hyperparameters:')
+    for index,row in df_best_params_points.iterrows():
+        if n_best_params_points > 1:
+            print(f'\nPoint {index}:')
+
+        for param in params_to_be_opt:
+            print(f'{param}: {row[param]}')
+
+    if n_best_params_points > 1:
+        print('Parameter Mean and St Dev:')
+        for param in params_to_be_opt:
+            param_values = df_best_params_points[param].values
+            print(f'{param} Mean: {np.mean(param_values)}, St Dev: {np.std(param_values)}')
+
+    if y_initial is not None:
+        print(f'   Best y: {y_best:.5f} (should be smaller than initial), a decrease of {y_initial-y_best:.5f}, {(y_initial-y_best)/y_initial:.3%}')
+        print(f'Initial y: {y_initial:.5f}')
+
+
+# In[ ]:
+
+
+y_initial = -xgb_early_stopping_auc_scorer(model_default, X_val, y_val)
+
+
+# ### Gaussian Process Surrogate
+
+# In[ ]:
+
+
+# radial basis function + white noise kernel
+bo_gp_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func,
+                      base_estimator=GaussianProcessRegressor(kernel=RBF(length_scale_bounds=[1.0e-3, 1.0e+3]) + WhiteKernel(noise_level=1.0e-5, noise_level_bounds=[1.0e-6, 1.0e-2]) ), # TODo tweak
+                     )
+
+
+# In[ ]:
+
+
+run_bo(bo_gp_opt, bo_n_iter=200, ann_text='GP', m_path='output', tag='_GP', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+
+
+# ### Random Forest Surrogate
+
+# In[ ]:
+
+
+bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func,
+                      base_estimator=RandomForestRegressor(n_estimators=200, min_variance=1.0e-6, random_state=rnd_seed+7), # TODo tweak, min_variance isn't a documented parameter of RandomForestRegressor()??
+                     )
+
+
+# In[ ]:
+
+
+run_bo(bo_rf_opt, bo_n_iter=200, ann_text='RF', m_path='output', tag='_RF', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+
+
+# ### Gradient Boosted Trees Surrogate TODO
+
+# ### Tree-Structured Parzen Estimator (TPE) Surrogate TODO
+
+# # Genetic Algorithm TODO
 
 # # Evaluate Performance TODO
 
 # In[ ]:
 
 
-def plot_y_pred(y_pred, y):
-    fig, ax = plt.subplots()
-
-    sig_mask = np.where(y == 1)
-    bkg_mask = np.where(y == 0)
-
-    plt.hist(y_pred[sig_mask], bins=np.linspace(0,1,11), histtype='step', color='C0', label='Signal')
-    plt.hist(y_pred[bkg_mask], bins=np.linspace(0,1,11), histtype='step', color='C1', label='Background')
-
-    leg = ax.legend(loc='upper right',frameon=False)
-    leg.get_frame().set_facecolor('none')
-    ax.set_yscale('log')
-
-    ax.set_xlabel('$\hat{y}$')
-    ax.set_ylabel('Counts')
-    ax.set_xlim([0.,1.])
-
-    plt.show()
-    # fig.savefig('roc.pdf')
+y_holdout_pred = model.predict_proba(X_holdout, ntree_limit=model.best_ntree_limit)[:,1]
 
 
 # In[ ]:
 
 
-plot_y_pred(y_test_pred, y_test)
+plot_y_pred(y_holdout_pred, y_holdout)
 
 
 # In[ ]:
 
 
-fpr, tpr, thr = roc_curve(y_test, y_test_pred)
-
-
-# In[ ]:
-
-
-def plot_roc(fpr, tpr, rndGuess=True, grid=False, better_ann=True):
-    fig, ax = plt.subplots()
-
-    label=f'AUC {auc(fpr,tpr):.4f}'
-
-    ax.plot(fpr, tpr, lw=2, c='C0', ls='-', label=label)
-
-    if rndGuess:
-        x = np.linspace(0., 1.)
-        ax.plot(x, x, color='grey', linestyle=':', linewidth=2, label='Random Guess')
-
-    if grid:
-        ax.grid()
-
-    leg = ax.legend(loc='lower right',frameon=False)
-    leg.get_frame().set_facecolor('none')
-
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_xlim([0.,1.])
-    ax.set_ylim([0.,1.])
-
-    if better_ann:
-        plt.text(-0.08, 1.08, 'Better', size=12, rotation=45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
-
-    plt.show()
-    # fig.savefig('roc.pdf')
+fpr, tpr, thr = roc_curve(y_holdout, y_holdout_pred)
 
 
 # In[ ]:
 
 
 plot_roc(fpr, tpr)
+
+
+# # Dev
+
+# In[ ]:
+
+
+str(param_defaults)
+
+
+# In[ ]:
+
+
+# best from rs
+# model = rs.best_estimator_
+
+
+# In[ ]:
+
+
+# best from gs
+model = gs.best_estimator_
 

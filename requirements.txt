@@ -1,6 +1,8 @@
+jupyterlab
 pandas
 numpy
 scipy
 xgboost
 scikit-learn
+scikit-optimize
 matplotlib
