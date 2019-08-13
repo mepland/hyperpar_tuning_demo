@@ -35,9 +35,9 @@ from sklearn.metrics import roc_curve, auc, roc_auc_score
 ########################################################
 # xkopt
 from skopt import Optimizer
-from skopt.learning import GaussianProcessRegressor
-from skopt.learning import RandomForestRegressor
+from skopt.learning import GaussianProcessRegressor, RandomForestRegressor, GradientBoostingQuantileRegressor
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
+from sklearn.ensemble import GradientBoostingRegressor
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -299,7 +299,8 @@ report(gs)
 
 
 n_initial_points = 20
-acq_func='EI'
+# acq_func='EI'
+acq_func='gp_hedge' # select the best of EI, PI, LCB per iteration
 
 
 # In[ ]:
@@ -328,7 +329,7 @@ for iparam, param in enumerate(params_to_be_opt):
 # In[ ]:
 
 
-def run_bo(bo_opt, bo_n_iter, ann_text, m_path, tag, params_initial=None, y_initial=None, print_interval=5):
+def run_bo(bo_opt, bo_n_iter, ann_text, m_path='output', tag='', params_initial=None, y_initial=None, print_interval=5):
 
     # setup the function to be optimized
     def target_function(params):
@@ -479,15 +480,17 @@ y_initial = -xgb_early_stopping_auc_scorer(model_default, X_val, y_val)
 
 
 # radial basis function + white noise kernel
-bo_gp_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func,
-                      base_estimator=GaussianProcessRegressor(kernel=RBF(length_scale_bounds=[1.0e-3, 1.0e+3]) + WhiteKernel(noise_level=1.0e-5, noise_level_bounds=[1.0e-6, 1.0e-2]) ), # TODo tweak
+bo_gp_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func, random_state=rnd_seed+6,
+                      base_estimator=GaussianProcessRegressor(
+                          kernel=RBF(length_scale_bounds=[1.0e-3, 1.0e+3]) + WhiteKernel(noise_level=1.0e-5, noise_level_bounds=[1.0e-6, 1.0e-2])
+                      ),
                      )
 
 
 # In[ ]:
 
 
-run_bo(bo_gp_opt, bo_n_iter=200, ann_text='GP', m_path='output', tag='_GP', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+run_bo(bo_gp_opt, bo_n_iter=200, ann_text='GP', tag='_GP', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
 
 
 # ### Random Forest Surrogate
@@ -495,20 +498,37 @@ run_bo(bo_gp_opt, bo_n_iter=200, ann_text='GP', m_path='output', tag='_GP', para
 # In[ ]:
 
 
-bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func,
-                      base_estimator=RandomForestRegressor(n_estimators=200, min_variance=1.0e-6, random_state=rnd_seed+7), # TODo tweak, min_variance isn't a documented parameter of RandomForestRegressor()??
+bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func, random_state=rnd_seed+7,
+                      base_estimator=RandomForestRegressor(n_estimators=200, max_depth=8, random_state=rnd_seed+8),
                      )
 
 
 # In[ ]:
 
 
-run_bo(bo_rf_opt, bo_n_iter=200, ann_text='RF', m_path='output', tag='_RF', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+run_bo(bo_rf_opt, bo_n_iter=200, ann_text='RF', tag='_RF', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
 
 
-# ### Gradient Boosted Trees Surrogate TODO
+# ### Gradient Boosted Trees Surrogate
 
-# ### Tree-Structured Parzen Estimator (TPE) Surrogate TODO
+# In[ ]:
+
+
+gbrt_base_estimator = GradientBoostingQuantileRegressor(
+    base_estimator=GradientBoostingRegressor(loss='quantile', max_depth=8, learning_rate=0.1, n_estimators=200,
+                                             n_iter_no_change=10, validation_fraction=0.2, tol=0.0001, random_state=rnd_seed+9)
+)
+
+bo_bdt_opt = Optimizer(dimensions=dimensions, n_initial_points=n_initial_points, acq_func=acq_func, random_state=rnd_seed+10, base_estimator=gbrt_base_estimator)
+
+
+# In[ ]:
+
+
+run_bo(bo_bdt_opt, bo_n_iter=200, ann_text='GBDT', tag='_GBDT', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+
+
+# # Tree-Structured Parzen Estimator (TPE) TODO
 
 # # Genetic Algorithm TODO
 
@@ -536,6 +556,18 @@ fpr, tpr, thr = roc_curve(y_holdout, y_holdout_pred)
 
 
 plot_roc(fpr, tpr)
+
+
+# In[ ]:
+
+
+my_plot_evaluations(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', bins=10, dimensions=params_to_be_opt)
+
+
+# In[ ]:
+
+
+my_plot_objective(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to_be_opt)
 
 
 # # Dev

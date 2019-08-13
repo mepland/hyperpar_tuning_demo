@@ -2,13 +2,21 @@
 import os
 import pandas as pd
 import numpy as np
+import math
 
 from sklearn.metrics import auc
+from scipy.optimize import OptimizeResult
+from skopt.plots import _format_scatter_plot_axes, partial_dependence
+
+########################################################
+from skopt.utils import create_result
+def my_create_result(bo_opt):
+    return create_result(bo_opt.Xi, bo_opt.yi, bo_opt.space, bo_opt.rng, models=bo_opt.models)
 
 ########################################################
 # plotting
 import matplotlib as mpl
-mpl.use('Agg', warn=False)
+# mpl.use('Agg', warn=False)
 # mpl.rcParams['font.family'] = ['HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica', 'Arial', 'Lucida Grande', 'sans-serif']
 mpl.rcParams['axes.labelsize'] = 16
 mpl.rcParams['xtick.top']           = True
@@ -32,10 +40,11 @@ mpl.rcParams['ytick.minor.size']    = 4.0  # minor tick size in points
 mpl.rcParams['ytick.major.pad']     = 1.5  # distance to major tick label in points
 mpl.rcParams['ytick.minor.pad']     = 1.4  # distance to the minor tick label in points
 import matplotlib.pyplot as plt
-# import matplotlib.cm as cm
+import matplotlib.cm as cm
 # from matplotlib import gridspec
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 # import matplotlib.ticker as ticker
+from matplotlib.ticker import LogLocator
 
 ########################################################
 # Set common plot parameters
@@ -54,7 +63,7 @@ std_ann_y = 0.94
 # std_cmap_r = cm.plasma_r
 
 ########################################################
-def plot_bo_opt_convergence(y_values, y_title, x_bests, ann_text, m_path, fname, do_min=True, y_initial=None, tag='', inline=False):
+def plot_bo_opt_convergence(y_values, y_title, x_bests, ann_text, m_path='output', fname='convergence', tag='', do_min=True, y_initial=None, inline=False):
 
 	def cumulative_best(xs):
 		result = np.zeros_like(xs)
@@ -117,7 +126,7 @@ def plot_bo_opt_convergence(y_values, y_title, x_bests, ann_text, m_path, fname,
 		plt.close('all')
 
 ########################################################
-def plot_y_pred(y_pred, y, m_path, fname='y_pred', tag='', ann_text=None, inline=False):
+def plot_y_pred(y_pred, y, m_path='output', fname='y_pred', tag='', ann_text=None, inline=False):
 	fig, ax = plt.subplots()
 
 	sig_mask = np.where(y == 1)
@@ -135,7 +144,7 @@ def plot_y_pred(y_pred, y, m_path, fname='y_pred', tag='', ann_text=None, inline
 	ax.set_xlim([0.,1.])
 
 	if ann_text is not None:
-		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18, zorder=3)
+		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
 
 	plt.tight_layout()
 	if inline:
@@ -149,7 +158,7 @@ def plot_y_pred(y_pred, y, m_path, fname='y_pred', tag='', ann_text=None, inline
 
 ########################################################
 # TODO revive overlapping one
-def plot_roc(fpr, tpr, m_path, fname='y_pred', tag='', rndGuess=True, grid=False, better_ann=True, ann_text=None, inline=False):
+def plot_roc(fpr, tpr, m_path='output', fname='roc', tag='', rndGuess=True, grid=False, better_ann=True, ann_text=None, inline=False):
 	fig, ax = plt.subplots()
 
 	label=f'AUC {auc(fpr,tpr):.4f}'
@@ -174,7 +183,156 @@ def plot_roc(fpr, tpr, m_path, fname='y_pred', tag='', rndGuess=True, grid=False
 	if better_ann:
 		plt.text(-0.08, 1.08, 'Better', size=12, rotation=45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
 
-	plt.tight_layout()
+	# plt.tight_layout()
+	if inline:
+		fig.show()
+	else:
+		os.makedirs(m_path, exist_ok=True)
+		if plot_png:
+			fig.savefig(f'{m_path}/{fname}{tag}.png', dpi=png_dpi)
+		fig.savefig(f'{m_path}/{fname}{tag}.pdf')
+		plt.close('all')
+
+########################################################
+########################################################
+# The functions below are modified versions of the standard skopt functions in:
+# https://github.com/scikit-optimize/scikit-optimize/blob/master/skopt/plots.py
+########################################################
+########################################################
+
+########################################################
+def my_plot_objective(bo_opt, m_path='output', fname='objective', tag='', levels=10, n_points=40, n_samples=250, size=2, zscale='linear', dimensions=None, ann_text=None, inline=False):
+	result = my_create_result(bo_opt)
+	space = result.space
+	samples = np.asarray(result.x_iters)
+	rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
+
+	if zscale == 'log':
+		locator = LogLocator()
+	elif zscale == 'linear':
+		locator = None
+	else:
+		raise ValueError(f'Valid values for zscale are linear and log, not {zscale}')
+
+	fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(size * space.n_dims, size * space.n_dims))
+	fig.set_size_inches(aspect_ratio_single*vsize, vsize)
+	fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.1, wspace=0.1)
+
+	leg_objects = []
+	zi_min = None
+	zi_max = None
+
+	for i in range(space.n_dims):
+		for j in range(space.n_dims):
+			if i == j:
+				xi, yi = partial_dependence(space, result.models[-1], i, j=None, sample_points=rvs_transformed, n_points=n_points)
+				ax[i, i].plot(xi, yi)
+				ax[i, i].axvline(result.x[i], linestyle='--', color='r', lw=1)
+			# lower triangle
+			elif i > j:
+				xi, yi, zi = partial_dependence(space, result.models[-1], i, j, rvs_transformed, n_points)
+				if zi_min is None:
+					zi_min = np.min(zi)
+				else:
+					zi_min = min(zi_min, np.min(zi))
+				if zi_max is None:
+					zi_max = np.max(zi)
+				else:
+					zi_max = max(zi_max, np.max(zi))
+				ax[i, j].contourf(xi, yi, zi, levels, locator=locator, cmap=cm.viridis_r)
+				ax[i, j].scatter(samples[:, j], samples[:, i], c='k', s=10, lw=0.)
+				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+
+	_ = _format_scatter_plot_axes(ax, space, ylabel='$\partial($dependence$)$', dim_labels=dimensions)
+
+	norm = mpl.colors.Normalize(vmin=zi_min, vmax=zi_max)
+	cax = fig.add_axes([0.48, 0.82, 0.42, 0.05], label='cax')
+	cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cm.viridis, norm=norm, orientation='horizontal', label='$y$')
+
+	leg_objects.append(plt.Line2D([0],[0], ls='None', marker='o', c='black', ms=12, label='Iterations'))
+	leg_objects.append(plt.Line2D([0],[0], ls='None', marker='o', c='r', ms=12, label='Best'))
+
+	if ann_text is not None:
+		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
+
+	if len(leg_objects) > 0:
+		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
+		leg.get_frame().set_edgecolor('none')
+		leg.get_frame().set_facecolor('none')
+
+	# increase margins
+	fig.subplots_adjust(
+		left = 0.125,  # the left side of the subplots of the figure
+		right = 0.9,   # the right side of the subplots of the figure
+		bottom = 0.1,  # the bottom of the subplots of the figure
+		top = 0.9,     # the top of the subplots of the figure
+		wspace = 0.2,  # the amount of width reserved for space between subplots, expressed as a fraction of the average axis width
+		hspace = 0.2,  # the amount of height reserved for space between subplots, expressed as a fraction of the average axis height)
+	)
+
+	if inline:
+		fig.show()
+	else:
+		os.makedirs(m_path, exist_ok=True)
+		if plot_png:
+			fig.savefig(f'{m_path}/{fname}{tag}.png', dpi=png_dpi)
+		fig.savefig(f'{m_path}/{fname}{tag}.pdf')
+		plt.close('all')
+
+########################################################
+def my_plot_evaluations(bo_opt, m_path='output', fname='evaluation', tag='', bins=20, dimensions=None, ann_text=None, inline=False):
+	result = my_create_result(bo_opt)
+
+	space = result.space
+	samples = np.asarray(result.x_iters)
+	order = range(samples.shape[0])
+	fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(2 * space.n_dims, 2 * space.n_dims))
+	fig.set_size_inches(aspect_ratio_single*vsize, vsize)
+	fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.1, wspace=0.1)
+
+	leg_objects = []
+
+	for i in range(space.n_dims):
+		for j in range(space.n_dims):
+			if i == j:
+				if space.dimensions[j].prior == 'log-uniform':
+					low, high = space.bounds[j]
+					bins_ = np.logspace(np.log10(low), np.log10(high), bins)
+				else:
+					bins_ = bins
+				ax[i, i].hist(samples[:, j], bins=bins_, range=space.dimensions[j].bounds)
+
+			# lower triangle
+			elif i > j:
+				ax[i, j].scatter(samples[:, j], samples[:, i], c=order, s=40, lw=0., cmap=cm.viridis)
+				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+
+	_ = _format_scatter_plot_axes(ax, space, ylabel='$N$', dim_labels=dimensions)
+
+	norm = mpl.colors.Normalize(vmin=0., vmax=int(math.ceil(max(order))/10.)*10.)
+	cax = fig.add_axes([0.48, 0.82, 0.42, 0.05], label='cax')
+	cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cm.viridis, norm=norm, orientation='horizontal', label='Iteration')
+
+	leg_objects.append(plt.Line2D([0],[0], ls='None', marker='o', c='r', ms=12, label='Best'))
+
+	if len(leg_objects) > 0:
+		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
+		leg.get_frame().set_edgecolor('none')
+		leg.get_frame().set_facecolor('none')
+
+	if ann_text is not None:
+		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
+
+	# increase margins
+	fig.subplots_adjust(
+		left = 0.125,  # the left side of the subplots of the figure
+		right = 0.9,   # the right side of the subplots of the figure
+		bottom = 0.1,  # the bottom of the subplots of the figure
+		top = 0.9,     # the top of the subplots of the figure
+		wspace = 0.2,  # the amount of width reserved for space between subplots, expressed as a fraction of the average axis width
+		hspace = 0.2,  # the amount of height reserved for space between subplots, expressed as a fraction of the average axis height)
+	)
+
 	if inline:
 		fig.show()
 	else:
