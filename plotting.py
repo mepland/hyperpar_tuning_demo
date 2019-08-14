@@ -3,15 +3,65 @@ import os
 import pandas as pd
 import numpy as np
 import math
+from collections import OrderedDict
 
 from sklearn.metrics import auc
-from scipy.optimize import OptimizeResult
 from skopt.plots import _format_scatter_plot_axes, partial_dependence
 
 ########################################################
+# class conversions
+import skopt
+from scipy.optimize import OptimizeResult
 from skopt.utils import create_result
-def my_create_result(bo_opt):
-    return create_result(bo_opt.Xi, bo_opt.yi, bo_opt.space, bo_opt.rng, models=bo_opt.models)
+import hyperopt
+import neptunecontrib.hpo.utils as hpo_utils
+import sklearn
+
+def _convert_to_skopt_OptimizeResult(_result_in):
+	def _my_create_result(bo_opt):
+		return create_result(bo_opt.Xi, bo_opt.yi, bo_opt.space, bo_opt.rng, models=bo_opt.models)
+
+	if isinstance(_result_in, skopt.optimizer.optimizer.Optimizer):
+		# _result_in = skopt.optimizer.optimizer.Optimizer, from skopt
+
+		return _my_create_result(_result_in)
+
+	elif isinstance(_result_in, tuple):
+		optimize_results = OptimizeResult()
+
+		if isinstance(_result_in[0], hyperopt.base.Trials):
+			# _results_in = (hyperopt.base.Trials, collections.OrderedDict), from hyperopt
+
+			# hyperopt2skopt doesn't quite make the right OptimizeResult, but does handle spaces decently, so used it
+			# see https://neptune-contrib.readthedocs.io/user_guide/hpo/utils.html
+
+			bo_opt = hpo_utils.hyperopt2skopt(_result_in[0], _result_in[1])
+
+			optimize_results.Xi = bo_opt.x_iters
+			optimize_results.yi = bo_opt.func_vals
+			optimize_results.space = bo_opt.space
+
+
+		elif isinstance(_result_in[0], sklearn.model_selection._search.RandomizedSearchCV) or isinstance(_result_in[0], sklearn.model_selection._search.GridSearchCV):
+			# _results_in = (RandomizedSearchCV or GridSearchCV, collections.OrderedDict), results from sklearn, with a matching space from hyperopt - bit of a hack...
+
+			Xi = []
+			for params in _result_in[0].cv_results_['params']:
+				Xi.append([params[param] for param in list(_result_in[1].keys())])
+
+			optimize_results.Xi = Xi
+			optimize_results.yi = [-score for score in _result_in[0].cv_results_['mean_test_score']]
+			optimize_results.space = hpo_utils._convert_space_hop_skopt(_result_in[1])
+
+		else:
+			raise ValueError(f"Don't know how to handle {type(_result_in)}!!")
+
+		optimize_results.models = None # needed for my_plot_objective
+		optimize_results.rng = None # not needed
+		return _my_create_result(optimize_results)
+
+	else:
+		raise ValueError(f"Don't know how to handle {type(_result_in)}!!")
 
 ########################################################
 # plotting
@@ -63,7 +113,7 @@ std_ann_y = 0.94
 # std_cmap_r = cm.plasma_r
 
 ########################################################
-def plot_bo_opt_convergence(y_values, y_title, x_bests, ann_text, m_path='output', fname='convergence', tag='', do_min=True, y_initial=None, inline=False):
+def plot_convergence(y_values, ann_text, y_title='$y$', m_path='output', fname='convergence_y', tag='', do_min=True, y_initial=None, inline=False):
 
 	def cumulative_best(xs):
 		result = np.zeros_like(xs)
@@ -76,13 +126,16 @@ def plot_bo_opt_convergence(y_values, y_title, x_bests, ann_text, m_path='output
 		return result
 
 	df_values = pd.DataFrame({'x':np.arange(len(y_values)), 'y':y_values})
-	df_values_best = df_values.loc[df_values['x'].isin(x_bests)]
-	df_values_reg = df_values.loc[np.logical_not(df_values['x'].isin(x_bests))]
 
 	if do_min:
 		y_best = df_values['y'].min()
 	else:
 		y_best = df_values['y'].max()
+
+	x_bests = np.where(y_best == np.array(y_values))
+
+	df_values_best = df_values.loc[df_values['x'].isin(x_bests)]
+	df_values_reg = df_values.loc[np.logical_not(df_values['x'].isin(x_bests))]
 
 	fig, ax = plt.subplots()
 	fig.set_size_inches(aspect_ratio_single*vsize, vsize)
@@ -107,9 +160,9 @@ def plot_bo_opt_convergence(y_values, y_title, x_bests, ann_text, m_path='output
 
 	if y_initial is not None:
 		if do_min:
-			ann_text_final = f'{ann_text}\n{y_title} Inital: {y_initial:.5f}\nBest: {y_best:.5f}\nDecrease: {y_initial-y_best:.5f}\nPercentage: {(y_initial-y_best)/y_initial:.2%}'
+			ann_text_final = f'{ann_text}\n{y_title} Initial: {y_initial:.5f}\nBest: {y_best:.5f}\nDecrease: {y_initial-y_best:.5f}\nPercentage: {(y_initial-y_best)/y_initial:.2%}'
 		else:
-			ann_text_final = f'{ann_text}\n{y_title} Inital: {y_initial:.5f}\nBest: {y_best:.5f}\nIncrease: {y_best-y_initial:.5f}\nPercentage: {(y_best-y_initial)/y_initial:.2%}'
+			ann_text_final = f'{ann_text}\n{y_title} Initial: {y_initial:.5f}\nBest: {y_best:.5f}\nIncrease: {y_best-y_initial:.5f}\nPercentage: {(y_best-y_initial)/y_initial:.2%}'
 	else:
 		ann_text_final = f'{ann_text}\n{y_title} Best: {y_best:.5f}'
 
@@ -201,8 +254,75 @@ def plot_roc(fpr, tpr, m_path='output', fname='roc', tag='', rndGuess=True, grid
 ########################################################
 
 ########################################################
-def my_plot_objective(bo_opt, m_path='output', fname='objective', tag='', levels=10, n_points=40, n_samples=250, size=2, zscale='linear', dimensions=None, ann_text=None, inline=False):
-	result = my_create_result(bo_opt)
+def my_plot_evaluations(_result_in, m_path='output', fname='evaluation', tag='', bins=20, dimensions=None, ann_text=None, inline=False):
+	result = _convert_to_skopt_OptimizeResult(_result_in)
+
+	space = result.space
+	samples = np.asarray(result.x_iters)
+	order = range(samples.shape[0])
+	fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(2 * space.n_dims, 2 * space.n_dims))
+	fig.set_size_inches(aspect_ratio_single*vsize, vsize)
+	fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.1, wspace=0.1)
+
+	leg_objects = []
+
+	for i in range(space.n_dims):
+		for j in range(space.n_dims):
+			if i == j:
+				if space.dimensions[j].prior == 'log-uniform':
+					low, high = space.bounds[j]
+					bins_ = np.logspace(np.log10(low), np.log10(high), bins)
+				else:
+					bins_ = bins
+				ax[i, i].hist(samples[:, j], bins=bins_, range=space.dimensions[j].bounds)
+
+			# lower triangle
+			elif i > j:
+				ax[i, j].scatter(samples[:, j], samples[:, i], c=order, s=40, lw=0., cmap=cm.viridis)
+				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+
+	_ = _format_scatter_plot_axes(ax, space, ylabel='$N$', dim_labels=dimensions)
+
+	norm = mpl.colors.Normalize(vmin=0., vmax=int(math.ceil(max(order))/10.)*10.)
+	cax = fig.add_axes([0.48, 0.82, 0.42, 0.05], label='cax')
+	cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cm.viridis, norm=norm, orientation='horizontal', label='Iteration')
+
+	leg_objects.append(plt.Line2D([0],[0], ls='None', marker='o', c='r', ms=12, label='Best'))
+
+	if len(leg_objects) > 0:
+		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
+		leg.get_frame().set_edgecolor('none')
+		leg.get_frame().set_facecolor('none')
+
+	if ann_text is not None:
+		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
+
+	# increase margins
+	fig.subplots_adjust(
+		left = 0.125,  # the left side of the subplots of the figure
+		right = 0.9,   # the right side of the subplots of the figure
+		bottom = 0.1,  # the bottom of the subplots of the figure
+		top = 0.9,     # the top of the subplots of the figure
+		wspace = 0.2,  # the amount of width reserved for space between subplots, expressed as a fraction of the average axis width
+		hspace = 0.2,  # the amount of height reserved for space between subplots, expressed as a fraction of the average axis height)
+	)
+
+	if inline:
+		fig.show()
+	else:
+		os.makedirs(m_path, exist_ok=True)
+		if plot_png:
+			fig.savefig(f'{m_path}/{fname}{tag}.png', dpi=png_dpi)
+		fig.savefig(f'{m_path}/{fname}{tag}.pdf')
+		plt.close('all')
+
+########################################################
+def my_plot_objective(_result_in, m_path='output', fname='objective', tag='', levels=10, n_points=40, n_samples=250, size=2, zscale='linear', dimensions=None, ann_text=None, inline=False):
+	result = _convert_to_skopt_OptimizeResult(_result_in)
+
+	if result.models is None:
+		raise ValueError("result.models is None, can't plot_objective. _results_in is probably from hyperopt and is not supported")
+
 	space = result.space
 	samples = np.asarray(result.x_iters)
 	rvs_transformed = space.transform(space.rvs(n_samples=n_samples))
@@ -259,69 +379,6 @@ def my_plot_objective(bo_opt, m_path='output', fname='objective', tag='', levels
 		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
 		leg.get_frame().set_edgecolor('none')
 		leg.get_frame().set_facecolor('none')
-
-	# increase margins
-	fig.subplots_adjust(
-		left = 0.125,  # the left side of the subplots of the figure
-		right = 0.9,   # the right side of the subplots of the figure
-		bottom = 0.1,  # the bottom of the subplots of the figure
-		top = 0.9,     # the top of the subplots of the figure
-		wspace = 0.2,  # the amount of width reserved for space between subplots, expressed as a fraction of the average axis width
-		hspace = 0.2,  # the amount of height reserved for space between subplots, expressed as a fraction of the average axis height)
-	)
-
-	if inline:
-		fig.show()
-	else:
-		os.makedirs(m_path, exist_ok=True)
-		if plot_png:
-			fig.savefig(f'{m_path}/{fname}{tag}.png', dpi=png_dpi)
-		fig.savefig(f'{m_path}/{fname}{tag}.pdf')
-		plt.close('all')
-
-########################################################
-def my_plot_evaluations(bo_opt, m_path='output', fname='evaluation', tag='', bins=20, dimensions=None, ann_text=None, inline=False):
-	result = my_create_result(bo_opt)
-
-	space = result.space
-	samples = np.asarray(result.x_iters)
-	order = range(samples.shape[0])
-	fig, ax = plt.subplots(space.n_dims, space.n_dims, figsize=(2 * space.n_dims, 2 * space.n_dims))
-	fig.set_size_inches(aspect_ratio_single*vsize, vsize)
-	fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95, hspace=0.1, wspace=0.1)
-
-	leg_objects = []
-
-	for i in range(space.n_dims):
-		for j in range(space.n_dims):
-			if i == j:
-				if space.dimensions[j].prior == 'log-uniform':
-					low, high = space.bounds[j]
-					bins_ = np.logspace(np.log10(low), np.log10(high), bins)
-				else:
-					bins_ = bins
-				ax[i, i].hist(samples[:, j], bins=bins_, range=space.dimensions[j].bounds)
-
-			# lower triangle
-			elif i > j:
-				ax[i, j].scatter(samples[:, j], samples[:, i], c=order, s=40, lw=0., cmap=cm.viridis)
-				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
-
-	_ = _format_scatter_plot_axes(ax, space, ylabel='$N$', dim_labels=dimensions)
-
-	norm = mpl.colors.Normalize(vmin=0., vmax=int(math.ceil(max(order))/10.)*10.)
-	cax = fig.add_axes([0.48, 0.82, 0.42, 0.05], label='cax')
-	cb1 = mpl.colorbar.ColorbarBase(cax, cmap=cm.viridis, norm=norm, orientation='horizontal', label='Iteration')
-
-	leg_objects.append(plt.Line2D([0],[0], ls='None', marker='o', c='r', ms=12, label='Best'))
-
-	if len(leg_objects) > 0:
-		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
-		leg.get_frame().set_edgecolor('none')
-		leg.get_frame().set_facecolor('none')
-
-	if ann_text is not None:
-		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
 
 	# increase margins
 	fig.subplots_adjust(

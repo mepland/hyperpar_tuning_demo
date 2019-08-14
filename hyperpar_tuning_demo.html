@@ -13137,6 +13137,7 @@ div#notebook {
 <span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">time</span>
 <span class="c1"># from copy import copy</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="k">import</span> <span class="n">arff</span>
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">randint</span><span class="p">,</span> <span class="n">uniform</span>
@@ -13145,22 +13146,31 @@ div#notebook {
 <span class="c1"># xgboost, sklearn</span>
 <span class="kn">import</span> <span class="nn">xgboost</span> <span class="k">as</span> <span class="nn">xgb</span>
 
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;sklearn.externals.joblib is deprecated in 0.21 and will be removed in 0.23&#39;</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">StratifiedKFold</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">RandomizedSearchCV</span><span class="p">,</span> <span class="n">GridSearchCV</span>
 <span class="c1"># from sklearn.metrics import log_loss</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">roc_curve</span><span class="p">,</span> <span class="n">auc</span><span class="p">,</span> <span class="n">roc_auc_score</span>
 
 <span class="c1">########################################################</span>
-<span class="c1"># xkopt</span>
+<span class="c1"># skopt</span>
 <span class="kn">from</span> <span class="nn">skopt</span> <span class="k">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span> <span class="nn">skopt.learning</span> <span class="k">import</span> <span class="n">GaussianProcessRegressor</span><span class="p">,</span> <span class="n">RandomForestRegressor</span><span class="p">,</span> <span class="n">GradientBoostingQuantileRegressor</span>
 <span class="kn">from</span> <span class="nn">skopt.learning.gaussian_process.kernels</span> <span class="k">import</span> <span class="n">RBF</span><span class="p">,</span> <span class="n">WhiteKernel</span>
 <span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="k">import</span> <span class="n">GradientBoostingRegressor</span>
 
+<span class="c1">########################################################</span>
+<span class="c1"># hyperopt</span>
+<span class="kn">from</span> <span class="nn">hyperopt</span> <span class="k">import</span> <span class="n">hp</span><span class="p">,</span> <span class="n">tpe</span><span class="p">,</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">Trials</span>
+
+<span class="c1">########################################################</span>
+<span class="c1"># plotting</span>
 <span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
+<span class="c1">########################################################</span>
+<span class="c1"># globals</span>
 <span class="n">rnd_seed</span> <span class="o">=</span> <span class="mi">11</span>
 <span class="n">n_folds</span> <span class="o">=</span> <span class="mi">3</span>
 </pre></div>
@@ -13219,7 +13229,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="c1"># predict_proba may not be thread safe, so copy the object - unfortunetly getting crashes so just use the original object</span>
+    <span class="c1"># predict_proba may not be thread safe, so copy the object - unfortunately getting crashes so just use the original object</span>
     <span class="c1"># model = copy.copy(model_in)</span>
     <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">ntree_limit</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">best_ntree_limit</span><span class="p">)</span>
     <span class="n">y_pred_sig</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
@@ -13349,34 +13359,61 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">param_defaults_and_ranges</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">randint</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]},</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">param_defaults_and_ranges</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">({</span>
+    <span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">randint</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="s1">&#39;max_depth&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">))},</span>
         <span class="c1"># default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.</span>
-    <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]},</span>
+    <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)},</span>
+        <span class="c1"># NOTE: Optimizing the log of the learning rate would be better, but avoid that complexity for this demo...</span>
         <span class="c1"># default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate</span>
-    <span class="s1">&#39;min_child_weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">]},</span>
+    <span class="s1">&#39;min_child_weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;min_child_weight&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">)},</span>
         <span class="c1"># default=1, Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression task, this simply corresponds to minimum number of instances needed to be in each node. The larger min_child_weight is, the more conservative the algorithm will be.</span>
-    <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]},</span>
+    <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)},</span>
         <span class="c1"># default=0, Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger gamma is, the more conservative the algorithm will be. alias: min_split_loss</span>
-    <span class="c1"># &#39;max_delta_step&#39;: {&#39;default&#39;: 0., &#39;range&#39;: (0., 5.), &#39;dist&#39;: uniform(0., 5.), &#39;grid&#39;: [0., 1., 2.]},</span>
+    <span class="c1"># &#39;max_delta_step&#39;: {&#39;default&#39;: 0., &#39;range&#39;: (0., 5.), &#39;dist&#39;: uniform(0., 5.), &#39;grid&#39;: [0., 1., 2.], &#39;hp&#39;: hp.uniform(&#39;max_delta_step&#39;, 0., 5.)},</span>
         <span class="c1"># default=0, Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.</span>
-    <span class="c1"># &#39;reg_alpha&#39;: {&#39;default&#39;: 0., &#39;range&#39;: (0., 5.), &#39;dist&#39;: uniform(0., 5.), &#39;grid&#39;: [0., 1., 3.]},</span>
+    <span class="c1"># &#39;reg_alpha&#39;: {&#39;default&#39;: 0., &#39;range&#39;: (0., 5.), &#39;dist&#39;: uniform(0., 5.), &#39;grid&#39;: [0., 1., 3.], &#39;hp&#39;: hp.uniform(&#39;reg_alpha&#39;, 0., 5.)},</span>
         <span class="c1"># default=0, L1 regularization term on weights. Increasing this value will make model more conservative.</span>
-    <span class="c1"># &#39;reg_lambda&#39;: {&#39;default&#39;: 1., &#39;range&#39;: (0., 5.), &#39;dist&#39;: uniform(0., 5.), &#39;grid&#39;: [0., 1., 3]},</span>
+    <span class="c1"># &#39;reg_lambda&#39;: {&#39;default&#39;: 1., &#39;range&#39;: (0., 5.), &#39;dist&#39;: uniform(0., 5.), &#39;grid&#39;: [0., 1., 3], &#39;hp&#39;: hp.uniform(&#39;reg_lambda&#39;, 0., 5.)},</span>
         <span class="c1"># default=1, L2 regularization term on weights. Increasing this value will make model more conservative.</span>
-    <span class="c1"># &#39;colsample_bytree&#39;: {&#39;default&#39;: 1., &#39;range&#39;: (0.5, 1.), &#39;dist&#39;: uniform(0.5, 1.), &#39;grid&#39;: [0.5, 1.]},</span>
+    <span class="c1"># &#39;colsample_bytree&#39;: {&#39;default&#39;: 1., &#39;range&#39;: (0.5, 1.), &#39;dist&#39;: uniform(0.5, 1.), &#39;grid&#39;: [0.5, 1.], &#39;hp&#39;: hp.uniform(&#39;colsample_bytree&#39;, 0.5, 1.)},</span>
         <span class="c1"># default=1, Subsample ratio of columns when constructing each tree.</span>
-    <span class="c1"># &#39;subsample&#39;: {&#39;default&#39;: 1., &#39;range&#39;: (0.5, 1.), &#39;dist&#39;: uniform(0.5, 1.), &#39;grid&#39;: [0.5, 1.]},</span>
+    <span class="c1"># &#39;subsample&#39;: {&#39;default&#39;: 1., &#39;range&#39;: (0.5, 1.), &#39;dist&#39;: uniform(0.5, 1.), &#39;grid&#39;: [0.5, 1.], &#39;hp&#39;: hp.uniform(&#39;subsample&#39;, 0.5, 1.)},</span>
         <span class="c1"># default=1, Subsample ratio of the training instances. Setting it to 0.5 means that XGBoost would randomly sample half of the training data prior to growing trees. and this will prevent overfitting. Subsampling will occur once in every boosting iteration.</span>
-<span class="p">}</span>
+<span class="p">})</span>
+</pre></div>
 
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># break out the params_to_be_opt, and their ranges (dimensions), and defaults</span>
+<span class="n">params_to_be_opt</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">param_defaults_and_ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">params_to_be_opt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+    <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">])</span>
+
+<span class="c1"># break out dictionaries for each optimizer</span>
 <span class="n">param_defaults</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">param_dists</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="n">param_grids</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">param_hp_dists</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">param_defaults_and_ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">param_defaults</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span>
     <span class="n">param_dists</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;dist&#39;</span><span class="p">]</span>
     <span class="n">param_grids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;grid&#39;</span><span class="p">]</span>
+    <span class="n">param_hp_dists</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;hp&#39;</span><span class="p">]</span>
+
+<span class="c1"># make helper param index dict</span>
+<span class="n">param_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">iparam</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">params_to_be_opt</span><span class="p">):</span>
+    <span class="n">param_index_dict</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">iparam</span>
 </pre></div>
 
     </div>
@@ -13478,6 +13515,19 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">y_initial</span> <span class="o">=</span> <span class="o">-</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model_default</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -13490,7 +13540,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rs_n_iter</span> <span class="o">=</span> <span class="mi">1</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rs_n_iter</span> <span class="o">=</span> <span class="mi">10</span>
 
 <span class="n">rs</span> <span class="o">=</span> <span class="n">RandomizedSearchCV</span><span class="p">(</span><span class="n">estimator</span><span class="o">=</span><span class="n">xgb_model</span><span class="p">,</span> <span class="n">param_distributions</span><span class="o">=</span><span class="n">param_dists</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">,</span>
                         <span class="n">n_iter</span><span class="o">=</span><span class="n">rs_n_iter</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="n">search_n_jobs</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">skf</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">search_verbosity</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">4</span>
@@ -13527,6 +13577,19 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">report</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_convergence</span><span class="p">(</span><span class="n">y_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">rs</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">[</span><span class="s1">&#39;mean_test_score&#39;</span><span class="p">]]),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;RS&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RS&#39;</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13609,10 +13672,67 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_convergence</span><span class="p">(</span><span class="n">y_values</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">gs</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">[</span><span class="s1">&#39;mean_test_score&#39;</span><span class="p">]],</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GS&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GS&#39;</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># search time, best model, best params, for later comparison</span>
 <span class="c1"># print(gs_time)</span>
 <span class="c1"># print(gs.best_estimator_)</span>
 <span class="c1"># print(gs.best_params_)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Setup-datasets-and-objective-function-for-custom-searches">Setup datasets and objective function for custom searches<a class="anchor-link" href="#Setup-datasets-and-objective-function-for-custom-searches">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># make _BO train and val sets from regular train set, will use these for early stopping and regular val set for testing while iterating in the optimizers</span>
+<span class="n">X_train_OPT</span><span class="p">,</span> <span class="n">X_val_OPT</span><span class="p">,</span> <span class="n">y_train_OPT</span><span class="p">,</span> <span class="n">y_val_OPT</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># setup the function to be optimized</span>
+<span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span> <span class="n">objective</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">],</span> <span class="n">verbosity</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_verbosity&#39;</span><span class="p">],</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">6</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_OPT</span><span class="p">,</span> <span class="n">y_train_OPT</span><span class="p">,</span> <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_val_OPT</span><span class="p">,</span> <span class="n">y_val_OPT</span><span class="p">)],</span> <span class="n">eval_metric</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">])</span>
+
+    <span class="n">best_ntree_limit</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">best_ntree_limit</span>
+    <span class="k">if</span> <span class="n">best_ntree_limit</span> <span class="o">&gt;=</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Hit max_num_boost_rounds = </span><span class="si">{fixed_setup_params[&#39;max_num_boost_rounds&#39;]:d}</span><span class="s2">, model.best_ntree_limit = </span><span class="si">{best_ntree_limit:d}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># return the negative auc of the trained model, since Optimizer and hyperopt only minimize</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13633,7 +13753,6 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">n_initial_points</span> <span class="o">=</span> <span class="mi">20</span>
-<span class="c1"># acq_func=&#39;EI&#39;</span>
 <span class="n">acq_func</span><span class="o">=</span><span class="s1">&#39;gp_hedge&#39;</span> <span class="c1"># select the best of EI, PI, LCB per iteration</span>
 </pre></div>
 
@@ -13647,57 +13766,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># make _BO train and val sets from regular train set, will use these for early stopping and regular val set for testing while iterating in the BOs</span>
-<span class="n">X_train_BO</span><span class="p">,</span> <span class="n">X_val_BO</span><span class="p">,</span> <span class="n">y_train_BO</span><span class="p">,</span> <span class="n">y_val_BO</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_train</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># break out the params_to_be_opt, and their ranges (dimensions), and defaults</span>
-<span class="n">params_to_be_opt</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">param_defaults_and_ranges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">params_to_be_opt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-    <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">])</span>
-
-<span class="c1"># make helper param index dict</span>
-<span class="n">param_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">for</span> <span class="n">iparam</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">params_to_be_opt</span><span class="p">):</span>
-    <span class="n">param_index_dict</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">iparam</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">run_bo</span><span class="p">(</span><span class="n">bo_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="p">,</span> <span class="n">ann_text</span><span class="p">,</span> <span class="n">m_path</span><span class="o">=</span><span class="s1">&#39;output&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-
-    <span class="c1"># setup the function to be optimized</span>
-    <span class="k">def</span> <span class="nf">target_function</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-        <span class="c1"># returns negative auc of trained model, since Optimizer only minimizes</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span> <span class="n">objective</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">],</span> <span class="n">verbosity</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_verbosity&#39;</span><span class="p">],</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">6</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_BO</span><span class="p">,</span> <span class="n">y_train_BO</span><span class="p">,</span> <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_val_BO</span><span class="p">,</span> <span class="n">y_val_BO</span><span class="p">)],</span> <span class="n">eval_metric</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">])</span>
-
-        <span class="n">best_ntree_limit</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">best_ntree_limit</span>
-        <span class="k">if</span> <span class="n">best_ntree_limit</span> <span class="o">&gt;=</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">]:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Hit max_num_boost_rounds = </span><span class="si">{fixed_setup_params[&#39;max_num_boost_rounds&#39;]:d}</span><span class="s2">, model.best_ntree_limit = </span><span class="si">{best_ntree_limit:d}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="o">-</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
-
     <span class="n">iter_results</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">params_initial</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">y_initial</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># update bo_opt with the initial / default point, might as well since we have already computed it!</span>
@@ -13726,8 +13795,8 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
         <span class="n">is_repeat</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">bo_opt</span><span class="o">.</span><span class="n">Xi</span><span class="p">:</span>
             <span class="n">is_repeat</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="c1"># we have already evaluated target_function at this point! Pull old value, give it back and continue.</span>
-            <span class="c1"># not very elegant, might still get a warning from Optimizer, but at least is MUCH faster than recomputing target_function...</span>
+            <span class="c1"># we have already evaluated objective_function at this point! Pull old value, give it back and continue.</span>
+            <span class="c1"># not very elegant, might still get a warning from Optimizer, but at least is MUCH faster than recomputing objective_function...</span>
             <span class="n">past_i_iter</span> <span class="o">=</span> <span class="n">bo_opt</span><span class="o">.</span><span class="n">Xi</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
             <span class="n">y</span> <span class="o">=</span> <span class="n">bo_opt</span><span class="o">.</span><span class="n">yi</span><span class="p">[</span><span class="n">past_i_iter</span><span class="p">]</span> <span class="c1"># get from bo_opt array to be sure it&#39;s the right one</span>
 
@@ -13739,7 +13808,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
             <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">param</span><span class="p">,</span><span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">params_to_be_opt</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
                 <span class="n">params</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">target_function</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
         <span class="c1"># update bo_opt with the result for the test point</span>
         <span class="n">bo_opt</span><span class="o">.</span><span class="n">tell</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
@@ -13763,11 +13832,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 
             <span class="n">df_tmp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">iter_results</span><span class="p">)</span>
 
-            <span class="n">y_best_tmp</span> <span class="o">=</span> <span class="n">df_tmp</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-            <span class="n">i_x_bests</span> <span class="o">=</span> <span class="n">df_tmp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">df_tmp</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">y_best_tmp</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-            <span class="n">x_bests</span> <span class="o">=</span> <span class="n">df_tmp</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i_x_bests</span><span class="p">][</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-
-            <span class="n">plot_bo_opt_convergence</span><span class="p">(</span><span class="n">df_tmp</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="s1">&#39;$y$&#39;</span><span class="p">,</span> <span class="n">x_bests</span><span class="p">,</span> <span class="n">ann_text</span><span class="p">,</span> <span class="n">m_path</span><span class="p">,</span> <span class="s1">&#39;convergence_y&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">do_min</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">plot_convergence</span><span class="p">(</span><span class="n">df_tmp</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">ann_text</span><span class="p">,</span> <span class="n">m_path</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
 
     <span class="c1"># print best values</span>
     <span class="n">yi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bo_opt</span><span class="o">.</span><span class="n">yi</span><span class="p">)</span>
@@ -13828,19 +13893,6 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 
 </div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">y_initial</span> <span class="o">=</span> <span class="o">-</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model_default</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -13871,7 +13923,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run_bo</span><span class="p">(</span><span class="n">bo_gp_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GP&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="n">param_defaults</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run_bo</span><span class="p">(</span><span class="n">bo_gp_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GP&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="n">param_defaults</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13906,7 +13958,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run_bo</span><span class="p">(</span><span class="n">bo_rf_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RF&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="n">param_defaults</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run_bo</span><span class="p">(</span><span class="n">bo_rf_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RF&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="n">param_defaults</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13944,7 +13996,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run_bo</span><span class="p">(</span><span class="n">bo_bdt_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GBDT&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="n">param_defaults</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">run_bo</span><span class="p">(</span><span class="n">bo_bdt_opt</span><span class="p">,</span> <span class="n">bo_n_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GBDT&#39;</span><span class="p">,</span> <span class="n">params_initial</span><span class="o">=</span><span class="n">param_defaults</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">,</span> <span class="n">print_interval</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13955,9 +14007,38 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Tree-Structured-Parzen-Estimator-(TPE)-TODO">Tree-Structured Parzen Estimator (TPE) TODO<a class="anchor-link" href="#Tree-Structured-Parzen-Estimator-(TPE)-TODO">&#182;</a></h1>
+<h1 id="Tree-Structured-Parzen-Estimator-(TPE)">Tree-Structured Parzen Estimator (TPE)<a class="anchor-link" href="#Tree-Structured-Parzen-Estimator-(TPE)">&#182;</a></h1><p>Note that hyperopt with TPE can accommodate nested hyperparameter search distributions. See <a href="https://towardsdatascience.com/automated-machine-learning-hyperparameter-tuning-in-python-dfda59b72f8a#951b">here</a> for more.</p>
+
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tpe_trials</span> <span class="o">=</span> <span class="n">Trials</span><span class="p">()</span>
+
+<span class="n">tpe_best</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">space</span><span class="o">=</span><span class="n">param_hp_dists</span><span class="p">,</span> <span class="n">algo</span><span class="o">=</span><span class="n">tpe</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span> <span class="n">max_evals</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">trials</span><span class="o">=</span><span class="n">tpe_trials</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_convergence</span><span class="p">(</span><span class="n">y_values</span><span class="o">=</span><span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">tpe_trials</span><span class="o">.</span><span class="n">results</span><span class="p">],</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_TPE&#39;</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
@@ -13972,6 +14053,120 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <h1 id="Evaluate-Performance-TODO">Evaluate Performance TODO<a class="anchor-link" href="#Evaluate-Performance-TODO">&#182;</a></h1>
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">((</span><span class="n">rs</span><span class="p">,</span> <span class="n">param_hp_dists</span><span class="p">),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;RS&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RS&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">((</span><span class="n">gs</span><span class="p">,</span> <span class="n">param_hp_dists</span><span class="p">),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GS&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GS&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">(</span><span class="n">bo_gp_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GP&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+<span class="n">my_plot_objective</span><span class="p">(</span><span class="n">bo_gp_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GP&#39;</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">(</span><span class="n">bo_rf_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RF&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+<span class="n">my_plot_objective</span><span class="p">(</span><span class="n">bo_rf_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RF&#39;</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span> <span class="c1"># takes much longer for these partial dependencies</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">(</span><span class="n">bo_bdt_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GBDT&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+<span class="n">my_plot_objective</span><span class="p">(</span><span class="n">bo_bdt_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GBDT&#39;</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">((</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">param_hp_dists</span><span class="p">),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_TPE&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Dev">Dev<a class="anchor-link" href="#Dev">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">plotting</span> <span class="k">import</span> <span class="o">*</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
@@ -14030,68 +14225,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">(</span><span class="n">bo_bdt_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GBDT&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_objective</span><span class="p">(</span><span class="n">bo_bdt_opt</span><span class="p">,</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GBDT&#39;</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Dev">Dev<a class="anchor-link" href="#Dev">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">str</span><span class="p">(</span><span class="n">param_defaults</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># best from rs</span>
-<span class="c1"># model = rs.best_estimator_</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># best from gs</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">gs</span><span class="o">.</span><span class="n">best_estimator_</span>
+<div class=" highlight hl-ipython3"><pre><span></span> 
 </pre></div>
 
     </div>

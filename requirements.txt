@@ -1,8 +1,10 @@
 jupyterlab
 pandas
 numpy
+matplotlib
 scipy
 xgboost
 scikit-learn
 scikit-optimize
-matplotlib
+hyperopt
+neptune-contrib
