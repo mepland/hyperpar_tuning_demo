@@ -14173,7 +14173,20 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">y_holdout_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_holdout</span><span class="p">,</span> <span class="n">ntree_limit</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">best_ntree_limit</span><span class="p">)[:,</span><span class="mi">1</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">y_holdout_pred</span> <span class="o">=</span> <span class="n">model_default</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_holdout</span><span class="p">,</span> <span class="n">ntree_limit</span><span class="o">=</span><span class="n">model_default</span><span class="o">.</span><span class="n">best_ntree_limit</span><span class="p">)[:,</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
 </pre></div>
 
     </div>
@@ -14199,6 +14212,19 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thr</span> <span class="o">=</span> <span class="n">roc_curve</span><span class="p">(</span><span class="n">y_holdout</span><span class="p">,</span> <span class="n">y_holdout_pred</span><span class="p">)</span>
 </pre></div>
 
@@ -14212,7 +14238,23 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_roc</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">models</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;Default&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">fpr</span><span class="p">,</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">tpr</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_rocs</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">better_ann</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">plot_rocs</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">better_ann</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">y_axis_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max&#39;</span><span class="p">:</span><span class="mf">1e3</span><span class="p">},</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 
     </div>

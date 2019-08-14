@@ -631,7 +631,13 @@ from plotting import *
 # In[ ]:
 
 
-y_holdout_pred = model.predict_proba(X_holdout, ntree_limit=model.best_ntree_limit)[:,1]
+y_holdout_pred = model_default.predict_proba(X_holdout, ntree_limit=model_default.best_ntree_limit)[:,1]
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
@@ -643,13 +649,28 @@ plot_y_pred(y_holdout_pred, y_holdout)
 # In[ ]:
 
 
+
+
+
+# In[ ]:
+
+
 fpr, tpr, thr = roc_curve(y_holdout, y_holdout_pred)
 
 
 # In[ ]:
 
 
-plot_roc(fpr, tpr)
+models = [
+    {'name': 'default', 'nname': 'Default', 'fpr': fpr, 'tpr': tpr, 'c': 'black', 'ls': '--'},
+]
+
+
+# In[ ]:
+
+
+plot_rocs(models, rndGuess=True, better_ann=True, grid=False, inverse_log=False, inline=True)
+plot_rocs(models, rndGuess=True, better_ann=True, grid=False, inverse_log=True, y_axis_params={'max':1e3}, inline=True)
 
 
 # In[ ]:

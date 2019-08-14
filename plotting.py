@@ -100,8 +100,8 @@ from matplotlib.ticker import LogLocator
 # Set common plot parameters
 vsize = 11 # inches
 # aspect ratio width / height
-aspect_ratio_single = 4.0/3.0
-aspect_ratio_multi = 1.0
+aspect_ratio_single = 4./3.
+aspect_ratio_multi = 1.
 
 plot_png=True
 png_dpi=500
@@ -210,33 +210,79 @@ def plot_y_pred(y_pred, y, m_path='output', fname='y_pred', tag='', ann_text=Non
 		plt.close('all')
 
 ########################################################
-# TODO revive overlapping one
-def plot_roc(fpr, tpr, m_path='output', fname='roc', tag='', rndGuess=True, grid=False, better_ann=True, ann_text=None, inline=False):
+# plot overlaid roc curves for many models
+def plot_rocs(models, m_path='output', fname='roc', tag='', rndGuess=False, better_ann=True, grid=False, inverse_log=False, x_axis_params=None, y_axis_params=None, inline=False):
 	fig, ax = plt.subplots()
 
-	label=f'AUC {auc(fpr,tpr):.4f}'
-
-	ax.plot(fpr, tpr, lw=2, c='C0', ls='-', label=label)
-
 	if rndGuess:
-		x = np.linspace(0., 1.)
-		ax.plot(x, x, color='grey', linestyle=':', linewidth=2, label='Random Guess')
+		if inverse_log:
+			x = np.linspace(1e-10, 1.)
+			ax.plot(x, 1/x, color='grey', linestyle=':', linewidth=2, label='Random Guess')
+		else:
+			x = np.linspace(0., 1.)
+			ax.plot(x, x, color='grey', linestyle=':', linewidth=2, label='Random Guess')
+
+	for model in models:
+		# models is a list of dicts with keys name, nname, fpr, tpr, c (color), ls (linestyle)
+
+		if inverse_log:
+			with np.errstate(divide='ignore'):
+				y_values = np.divide(1., model['tpr'])
+		else:
+			y_values = model['tpr']
+
+		label=f"{model['nname']}, AUC: {auc(model['fpr'],model['tpr']):.4f}"
+
+		ax.plot(model['fpr'], y_values, lw=2, c=model.get('c', 'blue'), ls=model.get('ls', '-'), label=label)
+
+		fname = f"{fname}_{model['name']}"
 
 	if grid:
 		ax.grid()
 
-	leg = ax.legend(loc='lower right',frameon=False)
+	if inverse_log:
+		leg_loc = 'upper right'
+	else:
+		leg_loc = 'lower right'
+
+	leg = ax.legend(loc=leg_loc,frameon=False)
 	leg.get_frame().set_facecolor('none')
 
-	ax.set_xlabel('False Positive Rate')
-	ax.set_ylabel('True Positive Rate')
 	ax.set_xlim([0.,1.])
-	ax.set_ylim([0.,1.])
+	ax.set_xlabel('False Positive Rate')
+
+	# TODo see if still needed
+	# x_labels = ['{:}'.format(float(x)) for x in ax.get_xticks().tolist()]
+	# x_labels[0] = ''
+	# ax.set_xticklabels(x_labels)
+
+	if inverse_log:
+		ax.set_yscale('log')
+		ax.set_ylabel('Inverse True Positive Rate')
+	else:
+		ax.set_xlim([0.,1.])
+		ax.set_ylabel('True Positive Rate')
+
+	if not isinstance(x_axis_params, dict):
+		x_axis_params = dict()
+	x_min_current, x_max_current = ax.get_xlim()
+	x_min = x_axis_params.get('min', x_min_current)
+	x_max = x_axis_params.get('max', x_max_current)
+	ax.set_xlim([x_min, x_max])
+
+	if not isinstance(y_axis_params, dict):
+		y_axis_params = dict()
+	y_min_current, y_max_current = ax.get_ylim()
+	y_min = y_axis_params.get('min', y_min_current)
+	y_max = y_axis_params.get('max', y_max_current)
+	ax.set_ylim([y_min, y_max])
 
 	if better_ann:
-		plt.text(-0.08, 1.08, 'Better', size=12, rotation=45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
+		if inverse_log:
+			plt.text(-0.07, -0.12, 'Better', size=12, rotation=-45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
+		else:
+			plt.text(-0.07, 1.08, 'Better', size=12, rotation=45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
 
-	# plt.tight_layout()
 	if inline:
 		fig.show()
 	else:
@@ -290,7 +336,7 @@ def my_plot_evaluations(_result_in, m_path='output', fname='evaluation', tag='',
 	leg_objects.append(plt.Line2D([0],[0], ls='None', marker='o', c='r', ms=12, label='Best'))
 
 	if len(leg_objects) > 0:
-		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
+		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.)
 		leg.get_frame().set_edgecolor('none')
 		leg.get_frame().set_facecolor('none')
 
@@ -376,7 +422,7 @@ def my_plot_objective(_result_in, m_path='output', fname='objective', tag='', le
 		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
 
 	if len(leg_objects) > 0:
-		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.0)
+		leg = fig.legend(leg_objects, [ob.get_label() for ob in leg_objects], fontsize=18, bbox_to_anchor=(0.76, 0.55, 0.2, 0.2), loc='upper left', ncol=1, borderaxespad=0.)
 		leg.get_frame().set_edgecolor('none')
 		leg.get_frame().set_facecolor('none')
 
