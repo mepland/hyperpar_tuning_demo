@@ -103,8 +103,8 @@ vsize = 11 # inches
 aspect_ratio_single = 4./3.
 aspect_ratio_multi = 1.
 
-plot_png=True
-png_dpi=500
+plot_png=False
+png_dpi=200
 
 std_ann_x = 0.80
 std_ann_y = 0.94
@@ -166,7 +166,7 @@ def plot_convergence(y_values, ann_text, y_title='$y$', m_path='output', fname='
 	else:
 		ann_text_final = f'{ann_text}\n{y_title} Best: {y_best:.5f}'
 
-	plt.figtext(0.83, 0.82, ann_text_final, ha='center', va='top', size=18, zorder=3)
+	plt.figtext(0.84, 0.82, ann_text_final, ha='center', va='top', size=18, zorder=3)
 
 	plt.tight_layout()
 	if inline:
