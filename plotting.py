@@ -179,14 +179,14 @@ def plot_convergence(y_values, ann_text, y_title='$y$', m_path='output', fname='
 		plt.close('all')
 
 ########################################################
-def plot_y_pred(y_pred, y, m_path='output', fname='y_pred', tag='', ann_text=None, inline=False):
+def plot_y_pred(y_pred, y, m_path='output', fname='y_pred', tag='', nbins=20, ann_text=None, inline=False):
 	fig, ax = plt.subplots()
 
 	sig_mask = np.where(y == 1)
 	bkg_mask = np.where(y == 0)
 
-	plt.hist(y_pred[sig_mask], bins=np.linspace(0,1,11), histtype='step', color='C0', label='Signal')
-	plt.hist(y_pred[bkg_mask], bins=np.linspace(0,1,11), histtype='step', color='C1', label='Background')
+	plt.hist(y_pred[sig_mask], bins=np.linspace(0,1,nbins), histtype='step', color='C0', label='Signal')
+	plt.hist(y_pred[bkg_mask], bins=np.linspace(0,1,nbins), histtype='step', color='C1', label='Background')
 
 	leg = ax.legend(loc='upper right',frameon=False)
 	leg.get_frame().set_facecolor('none')
@@ -197,7 +197,7 @@ def plot_y_pred(y_pred, y, m_path='output', fname='y_pred', tag='', ann_text=Non
 	ax.set_xlim([0.,1.])
 
 	if ann_text is not None:
-		plt.figtext(std_ann_x, std_ann_y, ann_text, ha='center', va='top', size=18)
+		plt.figtext(std_ann_x, 0.8, ann_text, ha='center', va='top', size=18)
 
 	plt.tight_layout()
 	if inline:

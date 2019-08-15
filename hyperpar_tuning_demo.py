@@ -181,31 +181,31 @@ del X_tmp; del y_tmp
 skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 
 
-# ## Set Hyperparameter Ranges
+# ## Setup Hyperparameter Search Space
 # #### See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
 
 # In[ ]:
 
 
-param_defaults_and_ranges = OrderedDict({
-    'max_depth': {'default': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [5, 6, 8], 'hp': hp.choice('max_depth', range(3, 11))},
+all_params = OrderedDict({
+    'max_depth': {'initial': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [5, 6, 8], 'hp': hp.choice('max_depth', range(3, 11))},
         # default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
-    'learning_rate': {'default': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.05, 0.15, 0.3, 0.4], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
+    'learning_rate': {'initial': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.05, 0.15, 0.3, 0.4], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
         # NOTE: Optimizing the log of the learning rate would be better, but avoid that complexity for this demo...
         # default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate
-    'min_child_weight': {'default': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 2.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
+    'min_child_weight': {'initial': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 2.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
         # default=1, Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression task, this simply corresponds to minimum number of instances needed to be in each node. The larger min_child_weight is, the more conservative the algorithm will be.
-    'gamma': {'default': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0, 1], 'hp': hp.uniform('gamma', 0., 5.)},
+    'gamma': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0, 1], 'hp': hp.uniform('gamma', 0., 5.)},
         # default=0, Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger gamma is, the more conservative the algorithm will be. alias: min_split_loss
-    # 'max_delta_step': {'default': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 2.], 'hp': hp.uniform('max_delta_step', 0., 5.)},
+    # 'max_delta_step': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 2.], 'hp': hp.uniform('max_delta_step', 0., 5.)},
         # default=0, Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
-    # 'reg_alpha': {'default': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3.], 'hp': hp.uniform('reg_alpha', 0., 5.)},
+    # 'reg_alpha': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3.], 'hp': hp.uniform('reg_alpha', 0., 5.)},
         # default=0, L1 regularization term on weights. Increasing this value will make model more conservative.
-    # 'reg_lambda': {'default': 1., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3], 'hp': hp.uniform('reg_lambda', 0., 5.)},
+    # 'reg_lambda': {'initial': 1., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3], 'hp': hp.uniform('reg_lambda', 0., 5.)},
         # default=1, L2 regularization term on weights. Increasing this value will make model more conservative.
-    # 'colsample_bytree': {'default': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.], 'hp': hp.uniform('colsample_bytree', 0.5, 1.)},
+    # 'colsample_bytree': {'initial': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.], 'hp': hp.uniform('colsample_bytree', 0.5, 1.)},
         # default=1, Subsample ratio of columns when constructing each tree.
-    # 'subsample': {'default': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.], 'hp': hp.uniform('subsample', 0.5, 1.)},
+    # 'subsample': {'initial': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.], 'hp': hp.uniform('subsample', 0.5, 1.)},
         # default=1, Subsample ratio of the training instances. Setting it to 0.5 means that XGBoost would randomly sample half of the training data prior to growing trees. and this will prevent overfitting. Subsampling will occur once in every boosting iteration.
 })
 
@@ -213,20 +213,20 @@ param_defaults_and_ranges = OrderedDict({
 # In[ ]:
 
 
-# break out the params_to_be_opt, and their ranges (dimensions), and defaults
+# break out the params_to_be_opt, and their ranges (dimensions), and initial values
 params_to_be_opt = []
 dimensions = []
-for k,v in param_defaults_and_ranges.items():
+for k,v in all_params.items():
     params_to_be_opt.append(k)
     dimensions.append(v['range'])
 
 # break out dictionaries for each optimizer
-param_defaults = {}
+params_initial = {}
 param_dists = {}
 param_grids = {}
 param_hp_dists = OrderedDict()
-for k,v in param_defaults_and_ranges.items():
-    param_defaults[k] = v['default']
+for k,v in all_params.items():
+    params_initial[k] = v['initial']
     param_dists[k] = v['dist']
     param_grids[k] = v['grid']
     param_hp_dists[k] = v['hp']
@@ -276,22 +276,22 @@ xgb_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rou
                               random_state=rnd_seed+3)
 
 
-# #### Run with default hyperparameters as a baseline
+# #### Run with initial hyperparameters as a baseline
 
 # In[ ]:
 
 
-model_default = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
+model_initial = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
                                   objective=fixed_setup_params['xgb_objective'],
                                   verbosity=fixed_setup_params['xgb_verbosity'],
-                                  random_state=rnd_seed+3, **param_defaults)
-model_default.fit(X_train, y_train, **fixed_fit_params);
+                                  random_state=rnd_seed+3, **params_initial)
+model_initial.fit(X_train, y_train, **fixed_fit_params)
 
 
 # In[ ]:
 
 
-y_initial = -xgb_early_stopping_auc_scorer(model_default, X_val, y_val)
+y_initial = -xgb_early_stopping_auc_scorer(model_initial, X_val, y_val)
 
 
 # # Random Search
@@ -432,7 +432,7 @@ acq_func='gp_hedge' # select the best of EI, PI, LCB per iteration
 def run_bo(bo_opt, bo_n_iter, ann_text, m_path='output', tag='', params_initial=None, y_initial=None, print_interval=5, debug=False):
     iter_results = []
     if params_initial is not None and y_initial is not None:
-        # update bo_opt with the initial / default point, might as well since we have already computed it!
+        # update bo_opt with the initial point, might as well since we have already computed it!
         x_initial = [params_initial[param] for param in params_to_be_opt]
         bo_opt.tell(x_initial, y_initial)
 
@@ -554,7 +554,7 @@ bo_gp_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initi
 # In[ ]:
 
 
-run_bo(bo_gp_opt, bo_n_iter=n_iters['GP'], ann_text='GP', tag='_GP', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+run_bo(bo_gp_opt, bo_n_iter=n_iters['GP'], ann_text='GP', tag='_GP', params_initial=params_initial, y_initial=y_initial, print_interval=25)
 
 
 # ### Random Forest Surrogate
@@ -570,7 +570,7 @@ bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initi
 # In[ ]:
 
 
-run_bo(bo_rf_opt, bo_n_iter=n_iters['RF'], ann_text='RF', tag='_RF', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+run_bo(bo_rf_opt, bo_n_iter=n_iters['RF'], ann_text='RF', tag='_RF', params_initial=params_initial, y_initial=y_initial, print_interval=25)
 
 
 # ### Gradient Boosted Trees Surrogate
@@ -590,7 +590,7 @@ bo_bdt_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_init
 # In[ ]:
 
 
-run_bo(bo_bdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', params_initial=param_defaults, y_initial=y_initial, print_interval=25)
+run_bo(bo_bdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', params_initial=params_initial, y_initial=y_initial, print_interval=25)
 
 
 # # Tree-Structured Parzen Estimator (TPE)
@@ -601,7 +601,7 @@ run_bo(bo_bdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', para
 
 tpe_trials = Trials()
 
-tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'], trials=tpe_trials)
+tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'], trials=tpe_trials) # TODO random_state=rnd_seed+11 ?
 
 
 # In[ ]:
@@ -643,7 +643,8 @@ output_hyperopt_to_csv(tpe_trials, tag='_TPE')
 
 # # Genetic Algorithm TODO
 
-# # Evaluate Performance TODO
+# # Evaluate Performance
+# #### Make evaluation and objective (when possible) plots from skopt
 
 # In[ ]:
 
@@ -684,16 +685,11 @@ my_plot_objective(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to
 my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bins=10, dimensions=params_to_be_opt)
 
 
-# In[ ]:
-
-
-
-
+# #### Load best parameters from all optimizers
 
 # In[ ]:
 
 
-# load best results from all optimizers
 def combine_best_results(optimizer_abbrevs, m_path='output'):
     def load_df(fname, tag='', m_path=m_path, cols_int=[], cols_str=[]):
         full_fname = f'{m_path}/{fname}{tag}.csv'
@@ -720,10 +716,10 @@ def combine_best_results(optimizer_abbrevs, m_path='output'):
         else:
             df_best_results = pd.concat([df_best_results, df])
 
-    default_row = {'optimizer': 'Default', 'y': y_initial, 'auc': -y_initial}
+    initial_row = {'optimizer': 'Initial', 'y': y_initial, 'auc': -y_initial}
     for param in params_to_be_opt:
-        default_row[param] = param_defaults[param]
-    df_best_results = df_best_results.append(default_row, ignore_index=True)
+        initial_row[param] = params_initial[param]
+    df_best_results = df_best_results.append(initial_row, ignore_index=True)
 
     df_best_results['per_change'] = 100.*(y_initial - df_best_results['y'])/y_initial
 
@@ -751,6 +747,69 @@ df_best_results = combine_best_results(optimizer_abbrevs, m_path='output')
 df_best_results
 
 
+# #### Evaluate models with the best parameters from each optimizer
+
+# In[ ]:
+
+
+def eval_best_models(df_best_results):
+    best_models = {}
+    for index, row in df_best_results.iterrows():
+        params = {param: row[param] for k in params_to_be_opt}
+
+        this_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
+                                       objective=fixed_setup_params['xgb_objective'],
+                                       verbosity=fixed_setup_params['xgb_verbosity'],
+                                       random_state=rnd_seed+12, **params)
+        this_model.fit(X_train, y_train, **fixed_fit_params)
+
+        y_holdout_pred = this_model.predict_proba(X_holdout, ntree_limit=this_model.best_ntree_limit)[:,1]
+
+        fpr, tpr, thr = roc_curve(y_holdout, y_holdout_pred)
+
+        best_models[row['optimizer']] = dict({'model': this_model, 'y_holdout_pred': y_holdout_pred, 'fpr': fpr, 'tpr': tpr, 'thr': thr}, **row)
+
+    return best_models
+
+
+# In[ ]:
+
+
+best_models = eval_best_models(df_best_results)
+
+
+# #### Plot ROC curves
+
+# In[ ]:
+
+
+models_for_roc= [
+    {'name': 'Initial', 'nname': 'Initial', 'fpr': best_models['Initial']['fpr'], 'tpr': best_models['Initial']['tpr'], 'c': 'black', 'ls': '-'},
+    {'name': 'RS', 'nname': 'RS', 'fpr': best_models['RS']['fpr'], 'tpr': best_models['RS']['tpr'], 'c': 'C0', 'ls': ':'},
+    {'name': 'GS', 'nname': 'GS', 'fpr': best_models['GS']['fpr'], 'tpr': best_models['GS']['tpr'], 'c': 'C1', 'ls': '-.'},
+    {'name': 'GP', 'nname': 'GP', 'fpr': best_models['GP']['fpr'], 'tpr': best_models['GP']['tpr'], 'c': 'C2', 'ls': '-'},
+    {'name': 'RF', 'nname': 'RF', 'fpr': best_models['RF']['fpr'], 'tpr': best_models['RF']['tpr'], 'c': 'C3', 'ls': ':'},
+    {'name': 'GBDT', 'nname': 'GBDT', 'fpr': best_models['GBDT']['fpr'], 'tpr': best_models['GBDT']['tpr'], 'c': 'C4', 'ls': '--'},
+    {'name': 'TPE', 'nname': 'TPE', 'fpr': best_models['TPE']['fpr'], 'tpr': best_models['TPE']['tpr'], 'c': 'C5', 'ls': '-.'},
+]
+
+
+# In[ ]:
+
+
+plot_rocs(models_for_roc, rndGuess=True, inverse_log=False, inline=True)
+plot_rocs(models_for_roc, rndGuess=False, inverse_log=True, x_axis_params={'max':0.4}, y_axis_params={'max':1e1}, inline=True)
+
+
+# #### Plot predictions $\hat{y}$
+
+# In[ ]:
+
+
+for k,v in best_models.items():
+    plot_y_pred(v['y_holdout_pred'], y_holdout, tag=f'_{k}', ann_text=k, nbins=20)
+
+
 # # Dev
 
 # In[ ]:
@@ -763,51 +822,6 @@ raise ValueError('Stop Here, in Dev!')
 
 
 from plotting import *
-
-
-# In[ ]:
-
-
-y_holdout_pred = model_default.predict_proba(X_holdout, ntree_limit=model_default.best_ntree_limit)[:,1]
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-plot_y_pred(y_holdout_pred, y_holdout)
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-fpr, tpr, thr = roc_curve(y_holdout, y_holdout_pred)
-
-
-# In[ ]:
-
-
-models = [
-    {'name': 'default', 'nname': 'Default', 'fpr': fpr, 'tpr': tpr, 'c': 'black', 'ls': '--'},
-]
-
-
-# In[ ]:
-
-
-plot_rocs(models, rndGuess=True, better_ann=True, grid=False, inverse_log=False, inline=True)
-plot_rocs(models, rndGuess=True, better_ann=True, grid=False, inverse_log=True, y_axis_params={'max':1e2}, inline=True)
 
 
 # In[ ]:
