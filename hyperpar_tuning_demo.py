@@ -3,7 +3,9 @@
 
 # # Hyperparameter Tuning Demo
 # ### Matthew Epland, PhD
-# Partially adapted from the [sklearn documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
+# Adapted from:
+# * The [sklearn documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
+# * TODO
 
 # In[ ]:
 
@@ -52,70 +54,48 @@ import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 ########################################################
-# globals
+# set global rnd_seed for reproducability
 rnd_seed = 11
-n_folds = 2
+
+
+# In[ ]:
+
+
+from utils import * # load some helper functions, but keep main body of code in notebook for easier reading
+
+
+# In[ ]:
+
+
+from plotting import * # load plotting code
 
 
 # In[ ]:
 
 
 # TODO tweak
-n_iters ={
-    'RS': 200, # also multiplied by n_folds
-     # 'GS': set by the size of the grid, and n_folds
+n_iters = {
+    'RS': 200,
+     # 'GS': set by the size of the grid
     'GP': 200,
     'RF': 200,
     'GBDT': 200,
     'TPE': 200,
+    'GA': 200, # number of generations in this case
 }
 
-# for testing set all to a low number (40)
+# all will effectivly be multiplied by n_folds TODO
+n_folds = 5
+
+
+# In[ ]:
+
+
+# for testing lower iterations and folds
 for k,v in n_iters.items():
-    n_iters[k] = 40
+    n_iters[k] = 30
 
-
-# In[ ]:
-
-
-from plotting import * # load plotting code from plotting.py
-
-
-# In[ ]:
-
-
-# Utility function to report best scores from sklearn searches
-def report(results, n_top=3):
-    results = results.cv_results_
-    for i in range(1, n_top+1):
-        candidates = np.flatnonzero(results['rank_test_score'] == i)
-        for candidate in candidates:
-            print(f'Model with rank: {i}')
-            print(f"Mean validation score: {results['mean_test_score'][candidate]:.3f} (std: {results['std_test_score'][candidate]:.3f})")
-            print('Parameters: {0}\n'.format(results['params'][candidate]))
-
-
-# In[ ]:
-
-
-# Utility to save iteration results from sklearn searches
-def output_sklearn_to_csv(sklearn_result, m_path='output', tag=''):
-    cols_dict = {}
-    cols_dict['y'] = [-y for y in sklearn_result.cv_results_['mean_test_score']]
-    for param in params_to_be_opt:
-        cols_dict[param] = list(sklearn_result.cv_results_[f'param_{param}'])
-
-    df = pd.DataFrame(cols_dict)
-    df['auc'] = -df['y']
-    df = df.reset_index().rename(columns={'index': 'iter'})
-    df = df[['iter', 'y', 'auc']+params_to_be_opt]
-    df.to_csv(f'{m_path}/iter_results{tag}.csv', index=False, na_rep='nan')
-
-    df_best = df.copy()
-    df_best = df_best.loc[df_best['y'].min() == df_best['y']]
-    df_best = df_best.sort_values(by=params_to_be_opt).reset_index(drop=True)
-    df_best = df_best[['y', 'auc']+params_to_be_opt]
-    df_best.to_csv(f'{m_path}/best_params_points{tag}.csv', index=False, na_rep='nan')
+n_folds = 2
 
 
 # Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
@@ -124,6 +104,7 @@ def output_sklearn_to_csv(sklearn_result, m_path='output', tag=''):
 # In[ ]:
 
 
+# TODO update for CV
 def xgb_early_stopping_auc_scorer(model, X, y):
     # predict_proba may not be thread safe, so copy the object - unfortunately getting crashes so just use the original object
     # model = copy.copy(model_in)
@@ -133,7 +114,7 @@ def xgb_early_stopping_auc_scorer(model, X, y):
 
 
 # ## Load Polish Companies Bankruptcy Data
-# #### [Source and data dictionary](http://archive.ics.uci.edu/ml/datasets/Polish+companies+bankruptcy+data)
+# ### [Source and data dictionary](http://archive.ics.uci.edu/ml/datasets/Polish+companies+bankruptcy+data)
 
 # In[ ]:
 
@@ -169,7 +150,7 @@ X = df[features].values
 y = df[target].values
 
 X_tmp, X_holdout, y_tmp, y_holdout = train_test_split(X, y, test_size=0.2, random_state=rnd_seed, stratify=y)
-X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.2, random_state=rnd_seed+1, stratify=y_tmp)
+X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.2, random_state=rnd_seed+1, stratify=y_tmp) # TODO val sets will not be needed?
 del X_tmp; del y_tmp
 
 
@@ -182,7 +163,7 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 
 
 # ## Setup Hyperparameter Search Space
-# #### See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
+# ### See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
 
 # In[ ]:
 
@@ -285,7 +266,7 @@ model_initial = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost
                                   objective=fixed_setup_params['xgb_objective'],
                                   verbosity=fixed_setup_params['xgb_verbosity'],
                                   random_state=rnd_seed+3, **params_initial)
-model_initial.fit(X_train, y_train, **fixed_fit_params)
+model_initial.fit(X_train, y_train, **fixed_fit_params);
 
 
 # In[ ]:
@@ -334,15 +315,6 @@ output_sklearn_to_csv(rs, tag='_RS')
 plot_convergence(y_values=np.array([-y for y in rs.cv_results_['mean_test_score']]), ann_text='RS', tag='_RS', y_initial=y_initial)
 
 
-# In[ ]:
-
-
-# search time, best model, best params, for later comparison
-# print(rs_time)
-# print(rs.best_estimator_)
-# print(rs.best_params_)
-
-
 # # Grid Search
 
 # In[ ]:
@@ -383,16 +355,9 @@ output_sklearn_to_csv(gs, tag='_GS')
 plot_convergence(y_values=[-y for y in gs.cv_results_['mean_test_score']], ann_text='GS', tag='_GS', y_initial=y_initial)
 
 
-# In[ ]:
-
-
-# search time, best model, best params, for later comparison
-# print(gs_time)
-# print(gs.best_estimator_)
-# print(gs.best_params_)
-
-
 # # Setup datasets and objective function for custom searches
+
+# # TODO ADD CV
 
 # In[ ]:
 
@@ -601,7 +566,7 @@ run_bo(bo_bdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', para
 
 tpe_trials = Trials()
 
-tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'], trials=tpe_trials) # TODO random_state=rnd_seed+11 ?
+tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'], trials=tpe_trials, rstate= np.random.RandomState(rnd_seed+11))
 
 
 # In[ ]:
@@ -613,38 +578,57 @@ plot_convergence(y_values=tpe_trials.losses(), ann_text='TPE', tag='_TPE', y_ini
 # In[ ]:
 
 
-# Utility to save iteration results from hyperopt searches
-def output_hyperopt_to_csv(hyperopt_result, m_path='output', tag=''):
-    cols_dict = {}
-    cols_dict['y'] = tpe_trials.losses()
+output_hyperopt_to_csv(tpe_trials, tag='_TPE')
 
-    for param in params_to_be_opt:
-        cols_dict[param] = tpe_trials.vals[param]
 
-    df = pd.DataFrame(cols_dict)
-    df['auc'] = -df['y']
-    df = df.reset_index().rename(columns={'index': 'iter'})
-    df = df[['iter', 'y', 'auc']+params_to_be_opt]
-    df.to_csv(f'{m_path}/iter_results{tag}.csv', index=False, na_rep='nan')
+# # Genetic Algorithm
 
-    df_best = df.copy()
-    df_best = df_best.loc[df_best['y'].min() == df_best['y']]
-    df_best = df_best.drop_duplicates(subset=params_to_be_opt).reset_index(drop=True)
-    df_best = df_best.sort_values(by=params_to_be_opt).reset_index(drop=True)
-    df_best = df_best[['y', 'auc']+params_to_be_opt]
-    df_best.to_csv(f'{m_path}/best_params_points{tag}.csv', index=False, na_rep='nan')
+# # TODO
+# * Check on other unused params:
+#  * fixed_setup_params['xgb_verbosity'] = 0
+#  * fixed_setup_params['xgb_n_jobs'] = -1
+#  * fixed_fit_params['verbose'] = False
+# * Use best number of trees when making CV predictions
+# * Check on setting number of cores, maybe using the server on EC2
+# * Set random seed, but would require a careful rewrite of gentun
+
+# In[ ]:
+
+
+from gentun import GeneticAlgorithm, GridPopulation, XgboostIndividual
 
 
 # In[ ]:
 
 
-output_hyperopt_to_csv(tpe_trials, tag='_TPE')
+n_iters['GA'] = 2
 
 
-# # Genetic Algorithm TODO
+# In[ ]:
+
+
+# Generate a grid of individuals as the initial population
+# Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
+pop = GridPopulation(XgboostIndividual, X_train, y_train, genes_grid=param_grids,
+                     additional_parameters={'kfold': n_folds,
+                                            'objective': fixed_setup_params['xgb_objective'],
+                                            'eval_metric': fixed_fit_params['eval_metric'],
+                                            'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
+                                            'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
+                                           },
+                     crossover_rate=0.5, mutation_rate=0.015, maximize=False)
+
+ga = GeneticAlgorithm(pop, elitism=True)
+
+
+# In[ ]:
+
+
+ga.run(n_iters['GA'])
+
 
 # # Evaluate Performance
-# #### Make evaluation and objective (when possible) plots from skopt
+# ### Make evaluation and objective (when possible) plots from skopt
 
 # In[ ]:
 
@@ -685,53 +669,7 @@ my_plot_objective(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to
 my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bins=10, dimensions=params_to_be_opt)
 
 
-# #### Load best parameters from all optimizers
-
-# In[ ]:
-
-
-def combine_best_results(optimizer_abbrevs, m_path='output'):
-    def load_df(fname, tag='', m_path=m_path, cols_int=[], cols_str=[]):
-        full_fname = f'{m_path}/{fname}{tag}.csv'
-        try:
-            df = pd.read_csv(full_fname)
-            for col in df.columns:
-                if col in cols_int:
-                    df[col] = df[col].astype(int)
-                elif col in cols_str:
-                    df[col] = df[col].astype(str)
-                else:
-                    df[col] = df[col].astype(float)
-            return df
-        except:
-            raise ValueError('Could not open csv!')
-
-    df_best_results = None
-
-    for opt_name in optimizer_abbrevs:
-        df = load_df('best_params_points', tag=f'_{opt_name}', cols_int=['max_depth'])
-        df['optimizer'] = opt_name
-        if df_best_results is None:
-            df_best_results = df.copy()
-        else:
-            df_best_results = pd.concat([df_best_results, df])
-
-    initial_row = {'optimizer': 'Initial', 'y': y_initial, 'auc': -y_initial}
-    for param in params_to_be_opt:
-        initial_row[param] = params_initial[param]
-    df_best_results = df_best_results.append(initial_row, ignore_index=True)
-
-    df_best_results['per_change'] = 100.*(y_initial - df_best_results['y'])/y_initial
-
-    df_best_results = df_best_results.sort_values(by='y', ascending=True).reset_index(drop=True)
-    fixed_cols = ['optimizer', 'y', 'per_change', 'auc']+params_to_be_opt
-    cols = fixed_cols + list(set(df_best_results.columns)-set(fixed_cols))
-    df_best_results = df_best_results[cols]
-
-    df_best_results.to_csv(f'{m_path}/all_best_results.csv', index=False, na_rep='nan')
-
-    return df_best_results
-
+# ### Load best parameters from all optimizers
 
 # In[ ]:
 
@@ -747,7 +685,7 @@ df_best_results = combine_best_results(optimizer_abbrevs, m_path='output')
 df_best_results
 
 
-# #### Evaluate models with the best parameters from each optimizer
+# ### Evaluate models with the best parameters from each optimizer
 
 # In[ ]:
 
@@ -778,7 +716,7 @@ def eval_best_models(df_best_results):
 best_models = eval_best_models(df_best_results)
 
 
-# #### Plot ROC curves
+# ### Plot ROC curves
 
 # In[ ]:
 
@@ -801,7 +739,7 @@ plot_rocs(models_for_roc, rndGuess=True, inverse_log=False, inline=True)
 plot_rocs(models_for_roc, rndGuess=False, inverse_log=True, x_axis_params={'max':0.4}, y_axis_params={'max':1e1}, inline=True)
 
 
-# #### Plot predictions $\hat{y}$
+# ### Plot $\hat{y}$ predictions
 
 # In[ ]:
 
