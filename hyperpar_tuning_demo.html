@@ -13265,8 +13265,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># TODO update for CV</span>
-<span class="k">def</span> <span class="nf">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="c1"># predict_proba may not be thread safe, so copy the object - unfortunately getting crashes so just use the original object</span>
     <span class="c1"># model = copy.copy(model_in)</span>
     <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">ntree_limit</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">best_ntree_limit</span><span class="p">)</span>
@@ -13354,9 +13353,12 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">features</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
 
-<span class="n">X_tmp</span><span class="p">,</span> <span class="n">X_holdout</span><span class="p">,</span> <span class="n">y_tmp</span><span class="p">,</span> <span class="n">y_holdout</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_tmp</span><span class="p">,</span> <span class="n">y_tmp</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_tmp</span><span class="p">)</span> <span class="c1"># TODO val sets will not be needed?</span>
-<span class="k">del</span> <span class="n">X_tmp</span><span class="p">;</span> <span class="k">del</span> <span class="n">y_tmp</span>
+<span class="n">X_trainCV</span><span class="p">,</span> <span class="n">X_holdout</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span> <span class="n">y_holdout</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+<span class="k">del</span> <span class="n">X</span><span class="p">;</span> <span class="k">del</span> <span class="n">y</span><span class="p">;</span>
+
+<span class="n">dm_train</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">DMatrix</span><span class="p">(</span><span class="n">X_trainCV</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">y_trainCV</span><span class="p">)</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_val</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_trainCV</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_trainCV</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13496,7 +13498,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">fixed_fit_params</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="c1"># must see improvement over last num_early_stopping_rounds or will halt</span>
     <span class="s1">&#39;eval_set&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)],</span> <span class="c1"># data sets to use for early stopping evaluation</span>
-    <span class="s1">&#39;eval_metric&#39;</span><span class="p">:</span> <span class="s1">&#39;logloss&#39;</span><span class="p">,</span> <span class="c1"># evaluation metric for early stopping</span>
+    <span class="s1">&#39;eval_metric&#39;</span><span class="p">:</span> <span class="s1">&#39;auc&#39;</span><span class="p">,</span> <span class="c1"># evaluation metric for early stopping</span>
     <span class="s1">&#39;verbose&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="c1"># even more verbosity control</span>
 <span class="p">}</span>
 </pre></div>
@@ -13595,7 +13597,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">rs_start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 
-<span class="n">rs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">fixed_fit_params</span><span class="p">)</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_trainCV</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">fixed_fit_params</span><span class="p">)</span>
 
 <span class="n">rs_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">rs_start</span>
 
@@ -13625,7 +13627,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_sklearn_to_csv</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RS&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_sklearn_to_csv</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_RS&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13675,7 +13677,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">gs_start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 
-<span class="n">gs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">fixed_fit_params</span><span class="p">)</span>
+<span class="n">gs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_trainCV</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">fixed_fit_params</span><span class="p">)</span>
 
 <span class="n">gs_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">gs_start</span>
 
@@ -13705,7 +13707,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_sklearn_to_csv</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GS&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_sklearn_to_csv</span><span class="p">(</span><span class="n">gs</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GS&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13732,28 +13734,17 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <h1 id="Setup-datasets-and-objective-function-for-custom-searches">Setup datasets and objective function for custom searches<a class="anchor-link" href="#Setup-datasets-and-objective-function-for-custom-searches">&#182;</a></h1>
 </div>
 </div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="TODO-ADD-CV">TODO ADD CV<a class="anchor-link" href="#TODO-ADD-CV">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># make _BO train and val sets from regular train set, will use these for early stopping and regular val set for testing while iterating in the optimizers</span>
-<span class="n">X_train_OPT</span><span class="p">,</span> <span class="n">X_val_OPT</span><span class="p">,</span> <span class="n">y_train_OPT</span><span class="p">,</span> <span class="n">y_val_OPT</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="n">stratify</span><span class="o">=</span><span class="n">y_train</span><span class="p">)</span>
-</pre></div>
+</div># setup the function to be optimized - without CV
+def objective_function(params):
+    model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'], objective=fixed_setup_params['xgb_objective'], verbosity=fixed_setup_params['xgb_verbosity'], random_state=rnd_seed+6, **params)
+    model.fit(X_train_OPT, y_train_OPT, early_stopping_rounds=fixed_fit_params['early_stopping_rounds'], eval_set=[(X_val_OPT, y_val_OPT)], eval_metric=fixed_fit_params['eval_metric'], verbose=fixed_fit_params['verbose'])
 
-    </div>
-</div>
-</div>
+    best_ntree_limit = model.best_ntree_limit
+    if best_ntree_limit >= fixed_setup_params['max_num_boost_rounds']:
+        print(f"Hit max_num_boost_rounds = {fixed_setup_params['max_num_boost_rounds']:d}, model.best_ntree_limit = {best_ntree_limit:d}")
 
-</div>
+    # return the negative auc of the trained model, since Optimizer and hyperopt only minimize
+    return -xgb_early_stopping_auc_scorer(model, X_val, y_val)
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
@@ -13761,15 +13752,14 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># setup the function to be optimized</span>
 <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span> <span class="n">objective</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">],</span> <span class="n">verbosity</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_verbosity&#39;</span><span class="p">],</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">6</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train_OPT</span><span class="p">,</span> <span class="n">y_train_OPT</span><span class="p">,</span> <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">[(</span><span class="n">X_val_OPT</span><span class="p">,</span> <span class="n">y_val_OPT</span><span class="p">)],</span> <span class="n">eval_metric</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">])</span>
-
-    <span class="n">best_ntree_limit</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">best_ntree_limit</span>
-    <span class="k">if</span> <span class="n">best_ntree_limit</span> <span class="o">&gt;=</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">]:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Hit max_num_boost_rounds = </span><span class="si">{fixed_setup_params[&#39;max_num_boost_rounds&#39;]:d}</span><span class="s2">, model.best_ntree_limit = </span><span class="si">{best_ntree_limit:d}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">cv</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">cv</span><span class="p">(</span><span class="nb">dict</span><span class="p">({</span><span class="s1">&#39;objective&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">]},</span> <span class="o">**</span><span class="n">params</span><span class="p">),</span> <span class="n">dm_train</span><span class="p">,</span>
+                <span class="n">num_boost_round</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span> <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span>
+                <span class="n">nfold</span><span class="o">=</span><span class="n">n_folds</span><span class="p">,</span> <span class="n">stratified</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">folds</span><span class="o">=</span><span class="n">skf</span><span class="p">,</span>
+                <span class="n">metrics</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span>
+                <span class="n">verbose_eval</span><span class="o">=</span><span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">],</span> <span class="n">seed</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">6</span><span class="p">,</span> <span class="n">as_pandas</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># return the negative auc of the trained model, since Optimizer and hyperopt only minimize</span>
-    <span class="k">return</span> <span class="o">-</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">cv</span><span class="p">[</span><span class="n">f</span><span class="s2">&quot;test-</span><span class="si">{fixed_fit_params[&#39;eval_metric&#39;]}</span><span class="s2">-mean&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 </pre></div>
 
     </div>
@@ -14044,7 +14034,8 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tpe_trials</span> <span class="o">=</span> <span class="n">Trials</span><span class="p">()</span>
 
-<span class="n">tpe_best</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">space</span><span class="o">=</span><span class="n">param_hp_dists</span><span class="p">,</span> <span class="n">algo</span><span class="o">=</span><span class="n">tpe</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span> <span class="n">max_evals</span><span class="o">=</span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">],</span> <span class="n">trials</span><span class="o">=</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">rstate</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">11</span><span class="p">))</span>
+<span class="n">tpe_best</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">space</span><span class="o">=</span><span class="n">param_hp_dists</span><span class="p">,</span> <span class="n">algo</span><span class="o">=</span><span class="n">tpe</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span> <span class="n">max_evals</span><span class="o">=</span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">],</span>
+                <span class="n">trials</span><span class="o">=</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">rstate</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">11</span><span class="p">))</span>
 </pre></div>
 
     </div>
@@ -14070,7 +14061,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_hyperopt_to_csv</span><span class="p">(</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_TPE&#39;</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_hyperopt_to_csv</span><span class="p">(</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_TPE&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14088,14 +14079,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="TODO">TODO<a class="anchor-link" href="#TODO">&#182;</a></h1><ul>
-<li>Check on other unused params:<ul>
-<li>fixed_setup_params['xgb_verbosity'] = 0</li>
-<li>fixed_setup_params['xgb_n_jobs'] = -1</li>
-<li>fixed_fit_params['verbose'] = False</li>
-</ul>
-</li>
-<li>Use best number of trees when making CV predictions</li>
+<h3 id="Eventual-TODOs">Eventual TODOs<a class="anchor-link" href="#Eventual-TODOs">&#182;</a></h3><ul>
 <li>Check on setting number of cores, maybe using the server on EC2</li>
 <li>Set random seed, but would require a careful rewrite of gentun</li>
 </ul>
@@ -14136,16 +14120,18 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Generate a grid of individuals as the initial population</span>
 <span class="c1"># Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search</span>
-<span class="n">pop</span> <span class="o">=</span> <span class="n">GridPopulation</span><span class="p">(</span><span class="n">XgboostIndividual</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">genes_grid</span><span class="o">=</span><span class="n">param_grids</span><span class="p">,</span>
+<span class="n">pop</span> <span class="o">=</span> <span class="n">GridPopulation</span><span class="p">(</span><span class="n">XgboostIndividual</span><span class="p">,</span> <span class="n">X_trainCV</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span> <span class="n">genes_grid</span><span class="o">=</span><span class="n">param_grids</span><span class="p">,</span>
                      <span class="n">additional_parameters</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;kfold&#39;</span><span class="p">:</span> <span class="n">n_folds</span><span class="p">,</span>
                                             <span class="s1">&#39;objective&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">],</span>
                                             <span class="s1">&#39;eval_metric&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span>
                                             <span class="s1">&#39;num_boost_round&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span>
                                             <span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span>
+                                            <span class="s1">&#39;folds&#39;</span><span class="p">:</span> <span class="n">skf</span><span class="p">,</span> <span class="c1"># stratified kfolds from sklearn</span>
+                                            <span class="s1">&#39;verbose_eval&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">],</span>
                                            <span class="p">},</span>
                      <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.015</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-<span class="n">ga</span> <span class="o">=</span> <span class="n">GeneticAlgorithm</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">elitism</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ga</span> <span class="o">=</span> <span class="n">GeneticAlgorithm</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">tournament_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">elitism</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14159,6 +14145,32 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="c1"># TODO use df to make csv, plots as usual</span>
 </pre></div>
 
     </div>

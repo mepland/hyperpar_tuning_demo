@@ -104,7 +104,6 @@ n_folds = 2
 # In[ ]:
 
 
-# TODO update for CV
 def xgb_early_stopping_auc_scorer(model, X, y):
     # predict_proba may not be thread safe, so copy the object - unfortunately getting crashes so just use the original object
     # model = copy.copy(model_in)
@@ -149,9 +148,12 @@ features = sorted(list(set(df.columns)-set([target])))
 X = df[features].values
 y = df[target].values
 
-X_tmp, X_holdout, y_tmp, y_holdout = train_test_split(X, y, test_size=0.2, random_state=rnd_seed, stratify=y)
-X_train, X_val, y_train, y_val = train_test_split(X_tmp, y_tmp, test_size=0.2, random_state=rnd_seed+1, stratify=y_tmp) # TODO val sets will not be needed?
-del X_tmp; del y_tmp
+X_trainCV, X_holdout, y_trainCV, y_holdout = train_test_split(X, y, test_size=0.2, random_state=rnd_seed, stratify=y)
+del X; del y;
+
+dm_train = xgb.DMatrix(X_trainCV, label=y_trainCV)
+
+X_train, X_val, y_train, y_val = train_test_split(X_trainCV, y_trainCV, test_size=0.2, random_state=rnd_seed, stratify=y_trainCV)
 
 
 # Prepare Stratified k-Folds
@@ -241,7 +243,7 @@ search_verbosity = 1
 fixed_fit_params = {
     'early_stopping_rounds': 10, # must see improvement over last num_early_stopping_rounds or will halt
     'eval_set': [(X_val, y_val)], # data sets to use for early stopping evaluation
-    'eval_metric': 'logloss', # evaluation metric for early stopping
+    'eval_metric': 'auc', # evaluation metric for early stopping
     'verbose': False, # even more verbosity control
 }
 
@@ -290,7 +292,7 @@ rs = RandomizedSearchCV(estimator=xgb_model, param_distributions=param_dists, sc
 
 rs_start = time()
 
-rs.fit(X_train, y_train, groups=None, **fixed_fit_params)
+rs.fit(X_trainCV, y_trainCV, groups=None, **fixed_fit_params)
 
 rs_time = time()-rs_start
 
@@ -306,7 +308,7 @@ report(rs)
 # In[ ]:
 
 
-output_sklearn_to_csv(rs, tag='_RS')
+output_sklearn_to_csv(rs, params_to_be_opt, tag='_RS')
 
 
 # In[ ]:
@@ -330,7 +332,7 @@ gs = GridSearchCV(estimator=xgb_model, param_grid=param_grids, scoring=xgb_early
 
 gs_start = time()
 
-gs.fit(X_train, y_train, groups=None, **fixed_fit_params)
+gs.fit(X_trainCV, y_trainCV, groups=None, **fixed_fit_params)
 
 gs_time = time()-gs_start
 
@@ -346,7 +348,7 @@ report(gs)
 # In[ ]:
 
 
-output_sklearn_to_csv(gs, tag='_GS')
+output_sklearn_to_csv(gs, params_to_be_opt, tag='_GS')
 
 
 # In[ ]:
@@ -356,20 +358,7 @@ plot_convergence(y_values=[-y for y in gs.cv_results_['mean_test_score']], ann_t
 
 
 # # Setup datasets and objective function for custom searches
-
-# # TODO ADD CV
-
-# In[ ]:
-
-
-# make _BO train and val sets from regular train set, will use these for early stopping and regular val set for testing while iterating in the optimizers
-X_train_OPT, X_val_OPT, y_train_OPT, y_val_OPT = train_test_split(X_train, y_train, test_size=0.2, random_state=rnd_seed+5, stratify=y_train)
-
-
-# In[ ]:
-
-
-# setup the function to be optimized
+# setup the function to be optimized - without CV
 def objective_function(params):
     model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'], objective=fixed_setup_params['xgb_objective'], verbosity=fixed_setup_params['xgb_verbosity'], random_state=rnd_seed+6, **params)
     model.fit(X_train_OPT, y_train_OPT, early_stopping_rounds=fixed_fit_params['early_stopping_rounds'], eval_set=[(X_val_OPT, y_val_OPT)], eval_metric=fixed_fit_params['eval_metric'], verbose=fixed_fit_params['verbose'])
@@ -380,6 +369,19 @@ def objective_function(params):
 
     # return the negative auc of the trained model, since Optimizer and hyperopt only minimize
     return -xgb_early_stopping_auc_scorer(model, X_val, y_val)
+# In[ ]:
+
+
+# setup the function to be optimized
+def objective_function(params):
+    cv = xgb.cv(dict({'objective': fixed_setup_params['xgb_objective']}, **params), dm_train,
+                num_boost_round=fixed_setup_params['max_num_boost_rounds'], early_stopping_rounds=fixed_fit_params['early_stopping_rounds'],
+                nfold=n_folds, stratified=True, folds=skf,
+                metrics=fixed_fit_params['eval_metric'],
+                verbose_eval=fixed_fit_params['verbose'], seed=rnd_seed+6, as_pandas=True)
+
+    # return the negative auc of the trained model, since Optimizer and hyperopt only minimize
+    return -cv[f"test-{fixed_fit_params['eval_metric']}-mean"].iloc[-1]
 
 
 # # Bayesian Optimization
@@ -566,7 +568,8 @@ run_bo(bo_bdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', para
 
 tpe_trials = Trials()
 
-tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'], trials=tpe_trials, rstate= np.random.RandomState(rnd_seed+11))
+tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'],
+                trials=tpe_trials, rstate= np.random.RandomState(rnd_seed+11))
 
 
 # In[ ]:
@@ -578,17 +581,12 @@ plot_convergence(y_values=tpe_trials.losses(), ann_text='TPE', tag='_TPE', y_ini
 # In[ ]:
 
 
-output_hyperopt_to_csv(tpe_trials, tag='_TPE')
+output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
 
 
 # # Genetic Algorithm
 
-# # TODO
-# * Check on other unused params:
-#  * fixed_setup_params['xgb_verbosity'] = 0
-#  * fixed_setup_params['xgb_n_jobs'] = -1
-#  * fixed_fit_params['verbose'] = False
-# * Use best number of trees when making CV predictions
+# ### Eventual TODOs
 # * Check on setting number of cores, maybe using the server on EC2
 # * Set random seed, but would require a careful rewrite of gentun
 
@@ -609,22 +607,36 @@ n_iters['GA'] = 2
 
 # Generate a grid of individuals as the initial population
 # Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
-pop = GridPopulation(XgboostIndividual, X_train, y_train, genes_grid=param_grids,
+pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
                      additional_parameters={'kfold': n_folds,
                                             'objective': fixed_setup_params['xgb_objective'],
                                             'eval_metric': fixed_fit_params['eval_metric'],
                                             'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
                                             'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
+                                            'folds': skf, # stratified kfolds from sklearn
+                                            'verbose_eval': fixed_fit_params['verbose'],
                                            },
                      crossover_rate=0.5, mutation_rate=0.015, maximize=False)
 
-ga = GeneticAlgorithm(pop, elitism=True)
+ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbose=False)
 
 
 # In[ ]:
 
 
 ga.run(n_iters['GA'])
+
+
+# In[ ]:
+
+
+ga_results = ga.get_results()
+
+
+# In[ ]:
+
+
+ga_results # TODO use df to make csv, plots as usual
 
 
 # # Evaluate Performance

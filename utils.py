@@ -14,7 +14,7 @@ def report(results, n_top=3):
 
 ########################################################
 # Save iteration results from sklearn searches
-def output_sklearn_to_csv(sklearn_result, m_path='output', tag=''):
+def output_sklearn_to_csv(sklearn_result, params_to_be_opt, m_path='output', tag=''):
 	cols_dict = {}
 	cols_dict['y'] = [-y for y in sklearn_result.cv_results_['mean_test_score']]
 	for param in params_to_be_opt:
@@ -34,12 +34,12 @@ def output_sklearn_to_csv(sklearn_result, m_path='output', tag=''):
 
 ########################################################
 # Save iteration results from hyperopt searches
-def output_hyperopt_to_csv(hyperopt_result, m_path='output', tag=''):
+def output_hyperopt_to_csv(hyperopt_result, params_to_be_opt, m_path='output', tag=''):
 	cols_dict = {}
-	cols_dict['y'] = tpe_trials.losses()
+	cols_dict['y'] = hyperopt_result.losses()
 
 	for param in params_to_be_opt:
-		cols_dict[param] = tpe_trials.vals[param]
+		cols_dict[param] = hyperopt_result.vals[param]
 
 	df = pd.DataFrame(cols_dict)
 	df['auc'] = -df['y']
