@@ -13225,7 +13225,7 @@ div#notebook {
     <span class="s1">&#39;GA&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="c1"># number of generations in this case</span>
 <span class="p">}</span>
 
-<span class="c1"># all will effectivly be multiplied by n_folds TODO</span>
+<span class="c1"># all will effectivly be multiplied by n_folds</span>
 <span class="n">n_folds</span> <span class="o">=</span> <span class="mi">5</span>
 </pre></div>
 
@@ -13402,7 +13402,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">all_params</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">({</span>
     <span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;initial&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">randint</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="s1">&#39;max_depth&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">))},</span>
         <span class="c1"># default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.</span>
-    <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;initial&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)},</span>
+    <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;initial&#39;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)},</span>
         <span class="c1"># NOTE: Optimizing the log of the learning rate would be better, but avoid that complexity for this demo...</span>
         <span class="c1"># default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate</span>
     <span class="s1">&#39;min_child_weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;initial&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="s1">&#39;dist&#39;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">),</span> <span class="s1">&#39;grid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">],</span> <span class="s1">&#39;hp&#39;</span><span class="p">:</span> <span class="n">hp</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="s1">&#39;min_child_weight&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">)},</span>
@@ -14079,7 +14079,7 @@ def objective_function(params):
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Eventual-TODOs">Eventual TODOs<a class="anchor-link" href="#Eventual-TODOs">&#182;</a></h3><ul>
+<h4 id="Eventual-TODOs">Eventual TODOs<a class="anchor-link" href="#Eventual-TODOs">&#182;</a></h4><ul>
 <li>Check on setting number of cores, maybe using the server on EC2</li>
 <li>Set random seed, but would require a careful rewrite of gentun</li>
 </ul>
@@ -14105,7 +14105,7 @@ def objective_function(params):
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
 </pre></div>
 
     </div>
@@ -14129,7 +14129,7 @@ def objective_function(params):
                                             <span class="s1">&#39;folds&#39;</span><span class="p">:</span> <span class="n">skf</span><span class="p">,</span> <span class="c1"># stratified kfolds from sklearn</span>
                                             <span class="s1">&#39;verbose_eval&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">],</span>
                                            <span class="p">},</span>
-                     <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.015</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                     <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">ga</span> <span class="o">=</span> <span class="n">GeneticAlgorithm</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">tournament_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">elitism</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
@@ -14158,6 +14158,7 @@ def objective_function(params):
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga_results</span><span class="p">[[</span><span class="s1">&#39;generation&#39;</span><span class="p">,</span> <span class="s1">&#39;best_fitness&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">params_to_be_opt</span><span class="p">]</span>
 </pre></div>
 
     </div>
@@ -14170,7 +14171,20 @@ def objective_function(params):
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="c1"># TODO use df to make csv, plots as usual</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_convergence</span><span class="p">(</span><span class="n">y_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">ga_results</span><span class="p">[</span><span class="s1">&#39;best_fitness&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()]),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_gentun_to_csv</span><span class="p">(</span><span class="n">ga_results</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14266,6 +14280,19 @@ def objective_function(params):
 </div>
 
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">((</span><span class="n">ga_results</span><span class="p">,</span> <span class="n">param_hp_dists</span><span class="p">),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -14278,9 +14305,9 @@ def objective_function(params):
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">optimizer_abbrevs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;RS&#39;</span><span class="p">,</span> <span class="s1">&#39;GS&#39;</span><span class="p">,</span> <span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;TPE&#39;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">optimizer_abbrevs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;RS&#39;</span><span class="p">,</span> <span class="s1">&#39;GS&#39;</span><span class="p">,</span> <span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">]</span>
 
-<span class="n">df_best_results</span> <span class="o">=</span> <span class="n">combine_best_results</span><span class="p">(</span><span class="n">optimizer_abbrevs</span><span class="p">,</span> <span class="n">m_path</span><span class="o">=</span><span class="s1">&#39;output&#39;</span><span class="p">)</span>
+<span class="n">df_best_results</span> <span class="o">=</span> <span class="n">combine_best_results</span><span class="p">(</span><span class="n">optimizer_abbrevs</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">params_initial</span><span class="p">,</span> <span class="n">y_initial</span><span class="p">,</span> <span class="n">m_path</span><span class="o">=</span><span class="s1">&#39;output&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14371,6 +14398,7 @@ def objective_function(params):
     <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;RF&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;RF&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C3&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span><span class="p">},</span>
     <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GBDT&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GBDT&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C4&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">},</span>
     <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C5&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;-.&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">},</span>
 <span class="p">]</span>
 </pre></div>
 
@@ -14384,8 +14412,8 @@ def objective_function(params):
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_rocs</span><span class="p">(</span><span class="n">models_for_roc</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">plot_rocs</span><span class="p">(</span><span class="n">models_for_roc</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">x_axis_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max&#39;</span><span class="p">:</span><span class="mf">0.4</span><span class="p">},</span> <span class="n">y_axis_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max&#39;</span><span class="p">:</span><span class="mf">1e1</span><span class="p">},</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_rocs</span><span class="p">(</span><span class="n">models_for_roc</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">plot_rocs</span><span class="p">(</span><span class="n">models_for_roc</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_inverse_log&#39;</span><span class="p">,</span> <span class="n">x_axis_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max&#39;</span><span class="p">:</span><span class="mf">0.4</span><span class="p">},</span> <span class="n">y_axis_params</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;max&#39;</span><span class="p">:</span><span class="mf">1e1</span><span class="p">},</span> <span class="n">inline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 
     </div>

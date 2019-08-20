@@ -53,6 +53,19 @@ def _convert_to_skopt_OptimizeResult(_result_in):
 			optimize_results.yi = [-score for score in _result_in[0].cv_results_['mean_test_score']]
 			optimize_results.space = hpo_utils._convert_space_hop_skopt(_result_in[1])
 
+		elif isinstance(_result_in[0], pd.DataFrame):
+			# _results_in = (pd.DataFrame, collections.OrderedDict), results from gentun, with a matching space from hyperopt - bit of a hack...
+			df = _result_in[0]
+
+			Xi = []
+			params_list = [c for c in df.columns if c not in ['generation', 'best_fitness']]
+			for index, row in df.iterrows():
+				Xi.append([row[param] for param in params_list])
+
+			optimize_results.Xi = Xi
+			optimize_results.yi = [-score for score in df['best_fitness'].to_list()]
+			optimize_results.space = hpo_utils._convert_space_hop_skopt(_result_in[1])
+
 		else:
 			raise ValueError(f"Don't know how to handle {type(_result_in)}!!")
 
@@ -283,6 +296,7 @@ def plot_rocs(models, m_path='output', fname='roc', tag='', rndGuess=False, bett
 		else:
 			plt.text(-0.07, 1.08, 'Better', size=12, rotation=45, horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='green', alpha=0.2))
 
+	plt.tight_layout()
 	if inline:
 		fig.show()
 	else:

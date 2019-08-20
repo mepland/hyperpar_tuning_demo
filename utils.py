@@ -13,36 +13,8 @@ def report(results, n_top=3):
 			print('Parameters: {0}\n'.format(results['params'][candidate]))
 
 ########################################################
-# Save iteration results from sklearn searches
-def output_sklearn_to_csv(sklearn_result, params_to_be_opt, m_path='output', tag=''):
-	cols_dict = {}
-	cols_dict['y'] = [-y for y in sklearn_result.cv_results_['mean_test_score']]
-	for param in params_to_be_opt:
-		cols_dict[param] = list(sklearn_result.cv_results_[f'param_{param}'])
-
-	df = pd.DataFrame(cols_dict)
-	df['auc'] = -df['y']
-	df = df.reset_index().rename(columns={'index': 'iter'})
-	df = df[['iter', 'y', 'auc']+params_to_be_opt]
-	df.to_csv(f'{m_path}/iter_results{tag}.csv', index=False, na_rep='nan')
-
-	df_best = df.copy()
-	df_best = df_best.loc[df_best['y'].min() == df_best['y']]
-	df_best = df_best.sort_values(by=params_to_be_opt).reset_index(drop=True)
-	df_best = df_best[['y', 'auc']+params_to_be_opt]
-	df_best.to_csv(f'{m_path}/best_params_points{tag}.csv', index=False, na_rep='nan')
-
-########################################################
-# Save iteration results from hyperopt searches
-def output_hyperopt_to_csv(hyperopt_result, params_to_be_opt, m_path='output', tag=''):
-	cols_dict = {}
-	cols_dict['y'] = hyperopt_result.losses()
-
-	for param in params_to_be_opt:
-		cols_dict[param] = hyperopt_result.vals[param]
-
-	df = pd.DataFrame(cols_dict)
-	df['auc'] = -df['y']
+# helper function for _to_csv functions
+def _df_to_csv(df, params_to_be_opt, m_path, tag):
 	df = df.reset_index().rename(columns={'index': 'iter'})
 	df = df[['iter', 'y', 'auc']+params_to_be_opt]
 	df.to_csv(f'{m_path}/iter_results{tag}.csv', index=False, na_rep='nan')
@@ -55,7 +27,43 @@ def output_hyperopt_to_csv(hyperopt_result, params_to_be_opt, m_path='output', t
 	df_best.to_csv(f'{m_path}/best_params_points{tag}.csv', index=False, na_rep='nan')
 
 ########################################################
-def combine_best_results(optimizer_abbrevs, params_to_be_opt, m_path='output', fname='all_best_results'):
+# Save iteration results from sklearn searches
+def output_sklearn_to_csv(sklearn_result, params_to_be_opt, m_path='output', tag=''):
+	cols_dict = {}
+	cols_dict['y'] = [-y for y in sklearn_result.cv_results_['mean_test_score']]
+	for param in params_to_be_opt:
+		cols_dict[param] = list(sklearn_result.cv_results_[f'param_{param}'])
+
+	df = pd.DataFrame(cols_dict)
+	df['auc'] = -df['y']
+
+	_df_to_csv(df, params_to_be_opt, m_path, tag)
+
+########################################################
+# Save iteration results from hyperopt searches
+def output_hyperopt_to_csv(hyperopt_result, params_to_be_opt, m_path='output', tag=''):
+	cols_dict = {}
+	cols_dict['y'] = hyperopt_result.losses()
+
+	for param in params_to_be_opt:
+		cols_dict[param] = hyperopt_result.vals[param]
+
+	df = pd.DataFrame(cols_dict)
+	df['auc'] = -df['y']
+
+	_df_to_csv(df, params_to_be_opt, m_path, tag)
+
+########################################################
+# Save iteration results from gentun searches
+def output_gentun_to_csv(_df, params_to_be_opt, m_path='output', tag=''):
+	df = _df.copy()
+	df = df.rename(columns={'best_fitness': 'auc'})
+	df['y'] = -df['auc']
+
+	_df_to_csv(df, params_to_be_opt, m_path, tag)
+
+########################################################
+def combine_best_results(optimizer_abbrevs, params_to_be_opt, params_initial, y_initial, m_path='output', fname='all_best_results'):
 	def _load_df(_fname, tag='', m_path=m_path, cols_int=[], cols_str=[]):
 		full_fname = f'{m_path}/{_fname}{tag}.csv'
 		try:

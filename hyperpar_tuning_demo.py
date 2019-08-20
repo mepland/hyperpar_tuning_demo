@@ -84,7 +84,7 @@ n_iters = {
     'GA': 200, # number of generations in this case
 }
 
-# all will effectivly be multiplied by n_folds TODO
+# all will effectivly be multiplied by n_folds
 n_folds = 5
 
 
@@ -173,7 +173,7 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 all_params = OrderedDict({
     'max_depth': {'initial': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [5, 6, 8], 'hp': hp.choice('max_depth', range(3, 11))},
         # default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
-    'learning_rate': {'initial': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.05, 0.15, 0.3, 0.4], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
+    'learning_rate': {'initial': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.05, 0.15, 0.3], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
         # NOTE: Optimizing the log of the learning rate would be better, but avoid that complexity for this demo...
         # default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate
     'min_child_weight': {'initial': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 2.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
@@ -586,7 +586,7 @@ output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
 
 # # Genetic Algorithm
 
-# ### Eventual TODOs
+# #### Eventual TODOs
 # * Check on setting number of cores, maybe using the server on EC2
 # * Set random seed, but would require a careful rewrite of gentun
 
@@ -599,7 +599,7 @@ from gentun import GeneticAlgorithm, GridPopulation, XgboostIndividual
 # In[ ]:
 
 
-n_iters['GA'] = 2
+n_iters['GA'] = 3
 
 
 # In[ ]:
@@ -616,7 +616,7 @@ pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_g
                                             'folds': skf, # stratified kfolds from sklearn
                                             'verbose_eval': fixed_fit_params['verbose'],
                                            },
-                     crossover_rate=0.5, mutation_rate=0.015, maximize=False)
+                     crossover_rate=0.5, mutation_rate=0.02, maximize=True)
 
 ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbose=False)
 
@@ -631,12 +631,19 @@ ga.run(n_iters['GA'])
 
 
 ga_results = ga.get_results()
+ga_results = ga_results[['generation', 'best_fitness']+params_to_be_opt]
 
 
 # In[ ]:
 
 
-ga_results # TODO use df to make csv, plots as usual
+plot_convergence(y_values=np.array([-y for y in ga_results['best_fitness'].to_list()]), ann_text='GA', tag='_GA', y_initial=y_initial)
+
+
+# In[ ]:
+
+
+output_gentun_to_csv(ga_results, params_to_be_opt, tag='_GA')
 
 
 # # Evaluate Performance
@@ -681,14 +688,20 @@ my_plot_objective(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to
 my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bins=10, dimensions=params_to_be_opt)
 
 
+# In[ ]:
+
+
+my_plot_evaluations((ga_results, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
+
+
 # ### Load best parameters from all optimizers
 
 # In[ ]:
 
 
-optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE']
+optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE', 'GA']
 
-df_best_results = combine_best_results(optimizer_abbrevs, m_path='output')
+df_best_results = combine_best_results(optimizer_abbrevs, params_to_be_opt, params_initial, y_initial, m_path='output')
 
 
 # In[ ]:
@@ -741,14 +754,15 @@ models_for_roc= [
     {'name': 'RF', 'nname': 'RF', 'fpr': best_models['RF']['fpr'], 'tpr': best_models['RF']['tpr'], 'c': 'C3', 'ls': ':'},
     {'name': 'GBDT', 'nname': 'GBDT', 'fpr': best_models['GBDT']['fpr'], 'tpr': best_models['GBDT']['tpr'], 'c': 'C4', 'ls': '--'},
     {'name': 'TPE', 'nname': 'TPE', 'fpr': best_models['TPE']['fpr'], 'tpr': best_models['TPE']['tpr'], 'c': 'C5', 'ls': '-.'},
+    {'name': 'GA', 'nname': 'GA', 'fpr': best_models['GA']['fpr'], 'tpr': best_models['GA']['tpr'], 'c': 'C6', 'ls': '--'},
 ]
 
 
 # In[ ]:
 
 
-plot_rocs(models_for_roc, rndGuess=True, inverse_log=False, inline=True)
-plot_rocs(models_for_roc, rndGuess=False, inverse_log=True, x_axis_params={'max':0.4}, y_axis_params={'max':1e1}, inline=True)
+plot_rocs(models_for_roc, rndGuess=True, inverse_log=False, inline=False)
+plot_rocs(models_for_roc, rndGuess=False, inverse_log=True, tag='_inverse_log', x_axis_params={'max':0.4}, y_axis_params={'max':1e1}, inline=False)
 
 
 # ### Plot $\hat{y}$ predictions
