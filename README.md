@@ -17,12 +17,13 @@ git clone --recurse-submodules https://github.com/mepland/hyperpar_tuning_demo.g
 ```
 
 ## Installing Dependencies
-It is recommended to work in a [python virtual environment](https://realpython.com/python-virtual-environments-a-primer/) to avoid clashes with other installed software.
+It is recommended to work in a [python virtual environment](https://realpython.com/python-virtual-environments-a-primer/) to avoid clashes with other installed software. If you do not wish to use a virtual environment you can just run the first few cells of the notebook - useful when running on cloud-based virtual machines.
 ```bash
 python -m venv ~/.venvs/newenv
 source ~/.venvs/newenv/bin/activate
 pip install -r requirements.txt
 cd gentun
+pip install -r requirements.txt
 python setup.py install
 ```
 

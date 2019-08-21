@@ -1,6 +1,7 @@
 .ipynb_checkpoints
 .DS_Store
 output
+pkl_results
 *.swp
 *.pyc
 *style_file*.html

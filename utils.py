@@ -1,5 +1,22 @@
+import os
+import pickle
 import pandas as pd
 import numpy as np
+
+########################################################
+# dump results to pkl
+def dump_to_pkl(results, fname, m_path='pkl_results', tag=''):
+	os.makedirs(m_path, exist_ok=True)
+	with open(f'{m_path}/{fname}{tag}.pkl', 'wb') as f:
+		pickle.dump( results, f )
+
+########################################################
+# dump results to pkl
+def load_from_pkl(fname, m_path='pkl_results', tag=''):
+	results = None
+	with open(f'{m_path}/{fname}{tag}.pkl', 'rb') as f:
+		results = pickle.load( f )
+	return results
 
 ########################################################
 # Report best scores from sklearn searches
@@ -15,6 +32,8 @@ def report(results, n_top=3):
 ########################################################
 # helper function for _to_csv functions
 def _df_to_csv(df, params_to_be_opt, m_path, tag):
+	os.makedirs(m_path, exist_ok=True)
+
 	df = df.reset_index().rename(columns={'index': 'iter'})
 	df = df[['iter', 'y', 'auc']+params_to_be_opt]
 	df.to_csv(f'{m_path}/iter_results{tag}.csv', index=False, na_rep='nan')

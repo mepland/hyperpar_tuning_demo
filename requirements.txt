@@ -8,3 +8,4 @@ scikit-learn
 scikit-optimize
 hyperopt
 neptune-contrib
+setuptools

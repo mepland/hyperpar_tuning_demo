@@ -7,6 +7,41 @@
 # * The [sklearn documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
 # * TODO
 
+# Install required packages via pip if necessary, only run if you know what you're doing! [Reference](https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/)  
+# **Note: This does not use a virtual environment and will pip install directly to your system!**
+
+# In[ ]:
+
+
+import sys
+get_ipython().system('{sys.executable} -m pip install --upgrade pip')
+get_ipython().system('{sys.executable} -m pip install -r requirements.txt')
+get_ipython().system('{sys.executable} -m pip install -r gentun/requirements.txt')
+
+
+# In[ ]:
+
+
+# !{sys.executable} -m pip uninstall --yes gentun
+
+
+# In[ ]:
+
+
+get_ipython().run_cell_magic('bash', '', 'cd gentun/\n# pip install .\npython3 setup.py install')
+
+
+# Check how many cores we have
+
+# In[ ]:
+
+
+import multiprocessing
+multiprocessing.cpu_count()
+
+
+# ### Load packages!
+
 # In[ ]:
 
 
@@ -20,8 +55,9 @@ import numpy as np
 import warnings
 from time import time
 # from copy import copy
-import json
 from collections import OrderedDict
+import json
+import pickle
 
 from scipy.io import arff
 from scipy.stats import randint, uniform
@@ -70,34 +106,31 @@ from utils import * # load some helper functions, but keep main body of code in 
 from plotting import * # load plotting code
 
 
+# ### Set number of iterations
+
 # In[ ]:
 
 
 # TODO tweak
 n_iters = {
-    'RS': 200,
+    'RS': 500,
      # 'GS': set by the size of the grid
     'GP': 200,
     'RF': 200,
     'GBDT': 200,
     'TPE': 200,
-    'GA': 200, # number of generations in this case
+    'GA': 200, # number of generations TODO
 }
 
 # all will effectivly be multiplied by n_folds
-n_folds = 5
-
-
-# In[ ]:
-
+n_folds = 4
 
 # for testing lower iterations and folds
 for k,v in n_iters.items():
     n_iters[k] = 30
 
+n_iters['GA'] = 1
 n_folds = 2
-
-
 # Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
 # See the [documentation](https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object) for details.
 
@@ -126,7 +159,7 @@ df['class'] = df['class'].apply(int, args=(2,))
 # In[ ]:
 
 
-# Real feature names
+# Real feature names, for reference
 with open ('./attrs.json') as json_file:
     attrs_dict = json.load(json_file)
 
@@ -165,27 +198,28 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 
 
 # ## Setup Hyperparameter Search Space
-# ### See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
+# See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
 
 # In[ ]:
 
 
 all_params = OrderedDict({
-    'max_depth': {'initial': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [5, 6, 8], 'hp': hp.choice('max_depth', range(3, 11))},
+    'max_depth': {'initial': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [4, 6, 8], 'hp': hp.choice('max_depth', range(3, 11))},
         # default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
-    'learning_rate': {'initial': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.05, 0.15, 0.3], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
+    'learning_rate': {'initial': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.1, 0.15, 0.3], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
         # NOTE: Optimizing the log of the learning rate would be better, but avoid that complexity for this demo...
         # default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate
-    'min_child_weight': {'initial': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 2.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
+    'min_child_weight': {'initial': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 3.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
         # default=1, Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression task, this simply corresponds to minimum number of instances needed to be in each node. The larger min_child_weight is, the more conservative the algorithm will be.
-    'gamma': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0, 1], 'hp': hp.uniform('gamma', 0., 5.)},
+    'gamma': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 0.5, 1.], 'hp': hp.uniform('gamma', 0., 5.)},
         # default=0, Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger gamma is, the more conservative the algorithm will be. alias: min_split_loss
-    # 'max_delta_step': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 2.], 'hp': hp.uniform('max_delta_step', 0., 5.)},
-        # default=0, Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
-    # 'reg_alpha': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3.], 'hp': hp.uniform('reg_alpha', 0., 5.)},
+    'reg_alpha': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1.], 'hp': hp.uniform('reg_alpha', 0., 5.)},
         # default=0, L1 regularization term on weights. Increasing this value will make model more conservative.
-    # 'reg_lambda': {'initial': 1., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1., 3], 'hp': hp.uniform('reg_lambda', 0., 5.)},
+    'reg_lambda': {'initial': 1., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1.], 'hp': hp.uniform('reg_lambda', 0., 5.)},
         # default=1, L2 regularization term on weights. Increasing this value will make model more conservative.
+    # 'max_delta_step': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 1.], 'hp': hp.uniform('max_delta_step', 0., 5.)},
+        # default=0, Maximum delta step we allow each leaf output to be. If the value is set to 0, it means there is no constraint. If it is set to a positive value, it can help making the update step more conservative. Usually this parameter is not needed, but it might help in logistic regression when class is extremely imbalanced. Set it to value of 1-10 might help control the update.
+    # TODO debug ranges (0, 1) so they are actually working
     # 'colsample_bytree': {'initial': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.], 'hp': hp.uniform('colsample_bytree', 0.5, 1.)},
         # default=1, Subsample ratio of columns when constructing each tree.
     # 'subsample': {'initial': 1., 'range': (0.5, 1.), 'dist': uniform(0.5, 1.), 'grid': [0.5, 1.], 'hp': hp.uniform('subsample', 0.5, 1.)},
@@ -248,7 +282,7 @@ fixed_fit_params = {
 }
 
 
-# #### Setup XGBClassifier
+# ### Setup XGBClassifier
 
 # In[ ]:
 
@@ -278,6 +312,7 @@ y_initial = -xgb_early_stopping_auc_scorer(model_initial, X_val, y_val)
 
 
 # # Random Search
+# Randomly test different hyperparameters drawn from `param_dists`
 
 # In[ ]:
 
@@ -293,10 +328,17 @@ rs = RandomizedSearchCV(estimator=xgb_model, param_distributions=param_dists, sc
 rs_start = time()
 
 rs.fit(X_trainCV, y_trainCV, groups=None, **fixed_fit_params)
+dump_to_pkl(rs, 'RS')
 
 rs_time = time()-rs_start
 
 print(f"RandomizedSearchCV took {rs_time:.2f} seconds for {n_iters['RS']} candidates parameter settings")
+
+
+# In[ ]:
+
+
+rs = load_from_pkl('RS')
 
 
 # In[ ]:
@@ -318,6 +360,7 @@ plot_convergence(y_values=np.array([-y for y in rs.cv_results_['mean_test_score'
 
 
 # # Grid Search
+# Try all possible hyperparameter combinations `param_grids`, slow and poor exploration!
 
 # In[ ]:
 
@@ -333,10 +376,17 @@ gs = GridSearchCV(estimator=xgb_model, param_grid=param_grids, scoring=xgb_early
 gs_start = time()
 
 gs.fit(X_trainCV, y_trainCV, groups=None, **fixed_fit_params)
+dump_to_pkl(gs, 'GS')
 
 gs_time = time()-gs_start
 
 print(f"GridSearchCV took {gs_time:.2f} seconds for {len(gs.cv_results_['params'])} candidates parameter settings")
+
+
+# In[ ]:
+
+
+gs = load_from_pkl('GS')
 
 
 # In[ ]:
@@ -385,6 +435,8 @@ def objective_function(params):
 
 
 # # Bayesian Optimization
+# Use Bayesian optimization to intelligently decide where to sample the objective function next, based on prior results.  
+# Can use many different types of surrogate functions: Gaussian Process, Random Forest, Gradient Boosted Trees. Note that the later Tree-Structured Parzen Estimator (TPE) also uses Bayesian optimization, just with a TPE surrogate in a different optimizer package.
 
 # In[ ]:
 
@@ -505,7 +557,7 @@ def run_bo(bo_opt, bo_n_iter, ann_text, m_path='output', tag='', params_initial=
         print(f'Initial y: {y_initial:.5f}')
 
 
-# ### Gaussian Process Surrogate
+# ## Gaussian Process Surrogate
 
 # In[ ]:
 
@@ -521,10 +573,17 @@ bo_gp_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initi
 # In[ ]:
 
 
-run_bo(bo_gp_opt, bo_n_iter=n_iters['GP'], ann_text='GP', tag='_GP', params_initial=params_initial, y_initial=y_initial, print_interval=25)
+run_bo(bo_gp_opt, bo_n_iter=n_iters['GP'], ann_text='GP', tag='_GP', params_initial=params_initial, y_initial=y_initial, print_interval=50)
+dump_to_pkl(bo_gp_opt, 'GP')
 
 
-# ### Random Forest Surrogate
+# In[ ]:
+
+
+bo_gp_opt = load_from_pkl('GP')
+
+
+# ## Random Forest Surrogate
 
 # In[ ]:
 
@@ -537,10 +596,17 @@ bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initi
 # In[ ]:
 
 
-run_bo(bo_rf_opt, bo_n_iter=n_iters['RF'], ann_text='RF', tag='_RF', params_initial=params_initial, y_initial=y_initial, print_interval=25)
+run_bo(bo_rf_opt, bo_n_iter=n_iters['RF'], ann_text='RF', tag='_RF', params_initial=params_initial, y_initial=y_initial, print_interval=50)
+dump_to_pkl(bo_rf_opt, 'RF')
 
 
-# ### Gradient Boosted Trees Surrogate
+# In[ ]:
+
+
+bo_rf_opt = load_from_pkl('RF')
+
+
+# ## Gradient Boosted Trees Surrogate
 
 # In[ ]:
 
@@ -550,18 +616,25 @@ gbrt_base_estimator = GradientBoostingQuantileRegressor(
                                              n_iter_no_change=10, validation_fraction=0.2, tol=0.0001, random_state=rnd_seed+9)
 )
 
-bo_bdt_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initial_points*n_iters['GBDT']), acq_func=acq_func,
-                       random_state=rnd_seed+10, base_estimator=gbrt_base_estimator)
+bo_gbdt_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initial_points*n_iters['GBDT']), acq_func=acq_func,
+                        random_state=rnd_seed+10, base_estimator=gbrt_base_estimator)
 
 
 # In[ ]:
 
 
-run_bo(bo_bdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', params_initial=params_initial, y_initial=y_initial, print_interval=25)
+run_bo(bo_gbdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', params_initial=params_initial, y_initial=y_initial, print_interval=50)
+dump_to_pkl(bo_gbdt_opt, 'GBDT')
+
+
+# In[ ]:
+
+
+bo_gbdt_opt = load_from_pkl('GBDT')
 
 
 # # Tree-Structured Parzen Estimator (TPE)
-# Note that hyperopt with TPE can accommodate nested hyperparameter search distributions. See [here](https://towardsdatascience.com/automated-machine-learning-hyperparameter-tuning-in-python-dfda59b72f8a#951b) for more.
+# Note that hyperopt with TPE can accommodate nested hyperparameter search distributions. See [here](https://towardsdatascience.com/automated-machine-learning-hyperparameter-tuning-in-python-dfda59b72f8a#951b) for an example.
 
 # In[ ]:
 
@@ -570,6 +643,13 @@ tpe_trials = Trials()
 
 tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'],
                 trials=tpe_trials, rstate= np.random.RandomState(rnd_seed+11))
+dump_to_pkl(tpe_trials, 'TPE')
+
+
+# In[ ]:
+
+
+tpe_trials = load_from_pkl('TPE')
 
 
 # In[ ]:
@@ -599,12 +679,6 @@ from gentun import GeneticAlgorithm, GridPopulation, XgboostIndividual
 # In[ ]:
 
 
-n_iters['GA'] = 3
-
-
-# In[ ]:
-
-
 # Generate a grid of individuals as the initial population
 # Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
 pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
@@ -618,7 +692,14 @@ pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_g
                                            },
                      crossover_rate=0.5, mutation_rate=0.02, maximize=True)
 
-ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbose=False)
+ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbosity=1)
+
+
+# In[ ]:
+
+
+# TODO
+n_iters['GA'] = 1
 
 
 # In[ ]:
@@ -632,6 +713,43 @@ ga.run(n_iters['GA'])
 
 ga_results = ga.get_results()
 ga_results = ga_results[['generation', 'best_fitness']+params_to_be_opt]
+dump_to_pkl(ga_results, 'GA') # is just a df, but might as well still pkl to be consistent
+
+
+# In[ ]:
+
+
+# TODO
+
+
+# In[ ]:
+
+
+ga_results_new = load_from_pkl('GA')
+
+
+# In[ ]:
+
+
+ga_results
+
+
+# In[ ]:
+
+
+ga_results_new
+
+
+# In[ ]:
+
+
+assert ga_results_new == ga_results
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
@@ -678,8 +796,8 @@ my_plot_objective(bo_rf_opt, ann_text='RF', tag='_RF', dimensions=params_to_be_o
 # In[ ]:
 
 
-my_plot_evaluations(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', bins=10, dimensions=params_to_be_opt)
-my_plot_objective(bo_bdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to_be_opt)
+my_plot_evaluations(bo_gbdt_opt, ann_text='GBDT', tag='_GBDT', bins=10, dimensions=params_to_be_opt)
+my_plot_objective(bo_gbdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to_be_opt)
 
 
 # In[ ]:
@@ -691,7 +809,8 @@ my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bi
 # In[ ]:
 
 
-my_plot_evaluations((ga_results, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
+# TODO
+my_plot_evaluations((ga_results_new, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
 
 
 # ### Load best parameters from all optimizers
