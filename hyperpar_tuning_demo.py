@@ -96,7 +96,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 
 ########################################################
 # set global rnd_seed for reproducability
-rnd_seed = 11
+rnd_seed = 42
 
 
 # In[ ]:
@@ -116,19 +116,22 @@ from plotting import * # load plotting code
 # In[ ]:
 
 
-# TODO tweak
 n_iters = {
     'RS': 500,
      # 'GS': set by the size of the grid
-    'GP': 200,
-    'RF': 200,
-    'GBDT': 200,
-    'TPE': 200,
-    # 'GA': 200, # number of generations TODO
+    'GP': 300,
+    'RF': 300,
+    'GBDT': 300,
+    'TPE': 300,
+    # 'GA': 300, # number of generations
 }
 
 # all will effectivly be multiplied by n_folds
-n_folds = 4
+n_folds = 5
+
+
+# In[ ]:
+
 
 # for testing lower iterations and folds
 for k,v in n_iters.items():
@@ -136,6 +139,8 @@ for k,v in n_iters.items():
 
 # n_iters['GA'] = 1
 n_folds = 2
+
+
 # Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
 # See the [documentation](https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object) for details.
 
@@ -209,12 +214,12 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 
 
 all_params = OrderedDict({
-    'max_depth': {'initial': 5, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [4, 6, 8], 'hp': hp.choice('max_depth', range(3, 11))},
+    'max_depth': {'initial': 6, 'range': (3, 10), 'dist': randint(3, 10), 'grid': [4, 6, 8], 'hp': hp.choice('max_depth', [3,4,5,6,7,8,9,10])},
         # default=6, Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
     'learning_rate': {'initial': 0.3, 'range': (0.05, 0.6), 'dist': uniform(0.05, 0.6), 'grid': [0.1, 0.15, 0.3], 'hp': hp.uniform('learning_rate', 0.05, 0.6)},
         # NOTE: Optimizing the log of the learning rate would be better, but avoid that complexity for this demo...
         # default=0.3, Step size shrinkage used in update to prevents overfitting. After each boosting step, we can directly get the weights of new features, and eta shrinks the feature weights to make the boosting process more conservative. alias: learning_rate
-    'min_child_weight': {'initial': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 3.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
+    # 'min_child_weight': {'initial': 1., 'range': (1., 10.), 'dist': uniform(1., 10.), 'grid': [1., 3.], 'hp': hp.uniform('min_child_weight', 1., 10.)},
         # default=1, Minimum sum of instance weight (hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression task, this simply corresponds to minimum number of instances needed to be in each node. The larger min_child_weight is, the more conservative the algorithm will be.
     'gamma': {'initial': 0., 'range': (0., 5.), 'dist': uniform(0., 5.), 'grid': [0., 0.5, 1.], 'hp': hp.uniform('gamma', 0., 5.)},
         # default=0, Minimum loss reduction required to make a further partition on a leaf node of the tree. The larger gamma is, the more conservative the algorithm will be. alias: min_split_loss
@@ -675,12 +680,6 @@ output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
 # In[ ]:
 
 
-from plotting import *
-
-
-# In[ ]:
-
-
 my_plot_evaluations((rs, param_hp_dists), ann_text='RS', tag='_RS', bins=10, dimensions=params_to_be_opt)
 
 
@@ -851,7 +850,6 @@ ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbosity=1)
 # In[ ]:
 
 
-# TODO
 n_iters['GA'] = 1
 
 
@@ -897,8 +895,7 @@ assert ga_results_new == ga_results
 # In[ ]:
 
 
-# TODO
-my_plot_evaluations((ga_results_new, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
+my_plot_evaluations((ga_results, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
 
 
 # In[ ]:

@@ -339,7 +339,7 @@ def my_plot_evaluations(_result_in, m_path='output', fname='evaluation', tag='',
 			# lower triangle
 			elif i > j:
 				ax[i, j].scatter(samples[:, j], samples[:, i], c=order, s=40, lw=0., cmap=cm.viridis)
-				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=40, lw=0.)
 
 	_ = _format_scatter_plot_axes(ax, space, ylabel='$N$', dim_labels=dimensions)
 
@@ -419,11 +419,12 @@ def my_plot_objective(_result_in, m_path='output', fname='objective', tag='', le
 					zi_max = np.max(zi)
 				else:
 					zi_max = max(zi_max, np.max(zi))
-				ax[i, j].contourf(xi, yi, zi, levels, locator=locator, cmap=cm.viridis_r)
+				ax[i, j].contourf(xi, yi, zi, levels, locator=locator, cmap=cm.viridis)
 				ax[i, j].scatter(samples[:, j], samples[:, i], c='k', s=10, lw=0.)
-				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=20, lw=0.)
+				ax[i, j].scatter(result.x[j], result.x[i], c=['r'], s=40, lw=0.)
 
-	_ = _format_scatter_plot_axes(ax, space, ylabel='$\partial($dependence$)$', dim_labels=dimensions)
+	# _ = _format_scatter_plot_axes(ax, space, ylabel='$\partial($dependence$)$', dim_labels=dimensions)
+	_ = _format_scatter_plot_axes(ax, space, ylabel='$\partial($dep$)$', dim_labels=dimensions)
 
 	norm = mpl.colors.Normalize(vmin=zi_min, vmax=zi_max)
 	cax = fig.add_axes([0.48, 0.82, 0.42, 0.05], label='cax')
