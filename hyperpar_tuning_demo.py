@@ -4,8 +4,10 @@
 # # Hyperparameter Tuning Demo
 # ### Matthew Epland, PhD
 # Adapted from:
-# * The [sklearn documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
-# * TODO
+# * [Sklearn Documentation](https://scikit-learn.org/stable/auto_examples/model_selection/plot_randomized_search.html)
+# * [yandexdataschool/mlhep2018 Slides](https://github.com/yandexdataschool/mlhep2018/blob/master/day4-Fri/Black-Box.pdf)
+# * [Hyperparameter Optimization in Python Part 1: Scikit-Optimize](https://towardsdatascience.com/hyperparameter-optimization-in-python-part-1-scikit-optimize-754e485d24fe)
+# * [An Introductory Example of Bayesian Optimization in Python with Hyperopt](https://towardsdatascience.com/an-introductory-example-of-bayesian-optimization-in-python-with-hyperopt-aae40fff4ff0)
 
 # Install required packages via pip if necessary, only run if you know what you're doing! [Reference](https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/)  
 # **Note: This does not use a virtual environment and will pip install directly to your system!**
@@ -16,19 +18,22 @@
 import sys
 get_ipython().system('{sys.executable} -m pip install --upgrade pip')
 get_ipython().system('{sys.executable} -m pip install -r requirements.txt')
-get_ipython().system('{sys.executable} -m pip install -r gentun/requirements.txt')
+# !{sys.executable} -m pip install -r gentun/requirements.txt
 
 
 # In[ ]:
 
 
+# import sys
 # !{sys.executable} -m pip uninstall --yes gentun
 
 
 # In[ ]:
 
 
-get_ipython().run_cell_magic('bash', '', 'cd gentun/\n# pip install .\npython3 setup.py install')
+# %%bash
+# cd gentun/
+# python3 setup.py install
 
 
 # Check how many cores we have
@@ -119,7 +124,7 @@ n_iters = {
     'RF': 200,
     'GBDT': 200,
     'TPE': 200,
-    'GA': 200, # number of generations TODO
+    # 'GA': 200, # number of generations TODO
 }
 
 # all will effectivly be multiplied by n_folds
@@ -129,7 +134,7 @@ n_folds = 4
 for k,v in n_iters.items():
     n_iters[k] = 30
 
-n_iters['GA'] = 1
+# n_iters['GA'] = 1
 n_folds = 2
 # Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
 # See the [documentation](https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object) for details.
@@ -664,108 +669,14 @@ plot_convergence(y_values=tpe_trials.losses(), ann_text='TPE', tag='_TPE', y_ini
 output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
 
 
-# # Genetic Algorithm
-
-# #### Eventual TODOs
-# * Check on setting number of cores, maybe using the server on EC2
-# * Set random seed, but would require a careful rewrite of gentun
-
-# In[ ]:
-
-
-from gentun import GeneticAlgorithm, GridPopulation, XgboostIndividual
-
-
-# In[ ]:
-
-
-# Generate a grid of individuals as the initial population
-# Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
-pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
-                     additional_parameters={'kfold': n_folds,
-                                            'objective': fixed_setup_params['xgb_objective'],
-                                            'eval_metric': fixed_fit_params['eval_metric'],
-                                            'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
-                                            'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
-                                            'folds': skf, # stratified kfolds from sklearn
-                                            'verbose_eval': fixed_fit_params['verbose'],
-                                           },
-                     crossover_rate=0.5, mutation_rate=0.02, maximize=True)
-
-ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbosity=1)
-
-
-# In[ ]:
-
-
-# TODO
-n_iters['GA'] = 1
-
-
-# In[ ]:
-
-
-ga.run(n_iters['GA'])
-
-
-# In[ ]:
-
-
-ga_results = ga.get_results()
-ga_results = ga_results[['generation', 'best_fitness']+params_to_be_opt]
-dump_to_pkl(ga_results, 'GA') # is just a df, but might as well still pkl to be consistent
-
-
-# In[ ]:
-
-
-# TODO
-
-
-# In[ ]:
-
-
-ga_results_new = load_from_pkl('GA')
-
-
-# In[ ]:
-
-
-ga_results
-
-
-# In[ ]:
-
-
-ga_results_new
-
-
-# In[ ]:
-
-
-assert ga_results_new == ga_results
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-plot_convergence(y_values=np.array([-y for y in ga_results['best_fitness'].to_list()]), ann_text='GA', tag='_GA', y_initial=y_initial)
-
-
-# In[ ]:
-
-
-output_gentun_to_csv(ga_results, params_to_be_opt, tag='_GA')
-
-
 # # Evaluate Performance
 # ### Make evaluation and objective (when possible) plots from skopt
+
+# In[ ]:
+
+
+from plotting import *
+
 
 # In[ ]:
 
@@ -806,19 +717,12 @@ my_plot_objective(bo_gbdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_t
 my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bins=10, dimensions=params_to_be_opt)
 
 
-# In[ ]:
-
-
-# TODO
-my_plot_evaluations((ga_results_new, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
-
-
 # ### Load best parameters from all optimizers
 
 # In[ ]:
 
 
-optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE', 'GA']
+optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE'] # , 'GA']
 
 df_best_results = combine_best_results(optimizer_abbrevs, params_to_be_opt, params_initial, y_initial, m_path='output')
 
@@ -873,7 +777,7 @@ models_for_roc= [
     {'name': 'RF', 'nname': 'RF', 'fpr': best_models['RF']['fpr'], 'tpr': best_models['RF']['tpr'], 'c': 'C3', 'ls': ':'},
     {'name': 'GBDT', 'nname': 'GBDT', 'fpr': best_models['GBDT']['fpr'], 'tpr': best_models['GBDT']['tpr'], 'c': 'C4', 'ls': '--'},
     {'name': 'TPE', 'nname': 'TPE', 'fpr': best_models['TPE']['fpr'], 'tpr': best_models['TPE']['tpr'], 'c': 'C5', 'ls': '-.'},
-    {'name': 'GA', 'nname': 'GA', 'fpr': best_models['GA']['fpr'], 'tpr': best_models['GA']['tpr'], 'c': 'C6', 'ls': '--'},
+    # {'name': 'GA', 'nname': 'GA', 'fpr': best_models['GA']['fpr'], 'tpr': best_models['GA']['tpr'], 'c': 'C6', 'ls': '--'},
 ]
 
 
@@ -911,4 +815,100 @@ from plotting import *
 
 
 
+
+
+# # Genetic Algorithm
+
+# #### Eventual TODOs
+# * Multithreading
+# * Set random seed, but would require a careful rewrite of gentun
+
+# In[ ]:
+
+
+from gentun import GeneticAlgorithm, GridPopulation, XgboostIndividual
+
+
+# In[ ]:
+
+
+# Generate a grid of individuals as the initial population
+# Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
+pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
+                     additional_parameters={'kfold': n_folds,
+                                            'objective': fixed_setup_params['xgb_objective'],
+                                            'eval_metric': fixed_fit_params['eval_metric'],
+                                            'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
+                                            'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
+                                            'folds': skf, # stratified kfolds from sklearn
+                                            'verbose_eval': fixed_fit_params['verbose'],
+                                           },
+                     crossover_rate=0.5, mutation_rate=0.02, maximize=True)
+
+ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbosity=1)
+
+
+# In[ ]:
+
+
+# TODO
+n_iters['GA'] = 1
+
+
+# In[ ]:
+
+
+ga.run(n_iters['GA'])
+
+
+# In[ ]:
+
+
+ga_results = ga.get_results()
+ga_results = ga_results[['generation', 'best_fitness']+params_to_be_opt]
+dump_to_pkl(ga_results, 'GA') # is just a df, but might as well still pkl to be consistent
+
+
+# In[ ]:
+
+
+ga_results_new = load_from_pkl('GA')
+
+
+# In[ ]:
+
+
+ga_results
+
+
+# In[ ]:
+
+
+ga_results_new
+
+
+# In[ ]:
+
+
+# requires testing
+assert ga_results_new == ga_results
+
+
+# In[ ]:
+
+
+# TODO
+my_plot_evaluations((ga_results_new, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
+
+
+# In[ ]:
+
+
+plot_convergence(y_values=np.array([-y for y in ga_results['best_fitness'].to_list()]), ann_text='GA', tag='_GA', y_initial=y_initial)
+
+
+# In[ ]:
+
+
+output_gentun_to_csv(ga_results, params_to_be_opt, tag='_GA')
 
