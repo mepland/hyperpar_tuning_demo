@@ -21,14 +21,14 @@ get_ipython().system('{sys.executable} -m pip install -r requirements.txt')
 # !{sys.executable} -m pip install -r gentun/requirements.txt
 
 
-# In[ ]:
+# In[2]:
 
 
 # import sys
 # !{sys.executable} -m pip uninstall --yes gentun
 
 
-# In[ ]:
+# In[3]:
 
 
 # %%bash
@@ -38,7 +38,7 @@ get_ipython().system('{sys.executable} -m pip install -r requirements.txt')
 
 # Check how many cores we have
 
-# In[ ]:
+# In[4]:
 
 
 import multiprocessing
@@ -47,7 +47,7 @@ multiprocessing.cpu_count()
 
 # ### Load packages!
 
-# In[ ]:
+# In[2]:
 
 
 get_ipython().run_line_magic('load_ext', 'autoreload')
@@ -99,13 +99,13 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 rnd_seed = 42
 
 
-# In[ ]:
+# In[3]:
 
 
 from utils import * # load some helper functions, but keep main body of code in notebook for easier reading
 
 
-# In[ ]:
+# In[4]:
 
 
 from plotting import * # load plotting code
@@ -113,7 +113,7 @@ from plotting import * # load plotting code
 
 # ### Set number of iterations
 
-# In[ ]:
+# In[5]:
 
 
 n_iters = {
@@ -129,22 +129,16 @@ n_iters = {
 # all will effectivly be multiplied by n_folds
 n_folds = 5
 
-
-# In[ ]:
-
-
 # for testing lower iterations and folds
 for k,v in n_iters.items():
     n_iters[k] = 30
 
 # n_iters['GA'] = 1
 n_folds = 2
-
-
 # Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
 # See the [documentation](https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object) for details.
 
-# In[ ]:
+# In[6]:
 
 
 def xgb_early_stopping_auc_scorer(model, X, y):
@@ -158,7 +152,7 @@ def xgb_early_stopping_auc_scorer(model, X, y):
 # ## Load Polish Companies Bankruptcy Data
 # ### [Source and data dictionary](http://archive.ics.uci.edu/ml/datasets/Polish+companies+bankruptcy+data)
 
-# In[ ]:
+# In[7]:
 
 
 data = arff.loadarff('./data/1year.arff')
@@ -166,7 +160,7 @@ df = pd.DataFrame(data[0])
 df['class'] = df['class'].apply(int, args=(2,))
 
 
-# In[ ]:
+# In[8]:
 
 
 # Real feature names, for reference
@@ -176,7 +170,7 @@ with open ('./attrs.json') as json_file:
 
 # Setup Target and Features
 
-# In[ ]:
+# In[9]:
 
 
 target='class'
@@ -185,7 +179,7 @@ features = sorted(list(set(df.columns)-set([target])))
 
 # Make Train, Validation, and Holdout Sets
 
-# In[ ]:
+# In[10]:
 
 
 X = df[features].values
@@ -201,7 +195,7 @@ X_train, X_val, y_train, y_val = train_test_split(X_trainCV, y_trainCV, test_siz
 
 # Prepare Stratified k-Folds
 
-# In[ ]:
+# In[11]:
 
 
 skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
@@ -210,7 +204,7 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 # ## Setup Hyperparameter Search Space
 # See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
 
-# In[ ]:
+# In[12]:
 
 
 all_params = OrderedDict({
@@ -237,7 +231,7 @@ all_params = OrderedDict({
 })
 
 
-# In[ ]:
+# In[13]:
 
 
 # break out the params_to_be_opt, and their ranges (dimensions), and initial values
@@ -266,7 +260,7 @@ for iparam, param in enumerate(params_to_be_opt):
 
 # #### Set other fixed hyperparameters
 
-# In[ ]:
+# In[14]:
 
 
 fixed_setup_params = {
@@ -281,7 +275,7 @@ search_n_jobs = -1 # Number of parallel threads used to run hyperparameter searc
 search_verbosity = 1
 
 
-# In[ ]:
+# In[15]:
 
 
 fixed_fit_params = {
@@ -294,7 +288,7 @@ fixed_fit_params = {
 
 # ### Setup XGBClassifier
 
-# In[ ]:
+# In[16]:
 
 
 xgb_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
@@ -305,7 +299,7 @@ xgb_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rou
 
 # #### Run with initial hyperparameters as a baseline
 
-# In[ ]:
+# In[17]:
 
 
 model_initial = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
@@ -315,7 +309,7 @@ model_initial = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost
 model_initial.fit(X_train, y_train, **fixed_fit_params);
 
 
-# In[ ]:
+# In[18]:
 
 
 y_initial = -xgb_early_stopping_auc_scorer(model_initial, X_val, y_val)
@@ -324,7 +318,7 @@ y_initial = -xgb_early_stopping_auc_scorer(model_initial, X_val, y_val)
 # # Random Search
 # Randomly test different hyperparameters drawn from `param_dists`
 
-# In[ ]:
+# In[22]:
 
 
 rs = RandomizedSearchCV(estimator=xgb_model, param_distributions=param_dists, scoring=xgb_early_stopping_auc_scorer,
@@ -332,7 +326,7 @@ rs = RandomizedSearchCV(estimator=xgb_model, param_distributions=param_dists, sc
                        )
 
 
-# In[ ]:
+# In[23]:
 
 
 rs_start = time()
@@ -345,25 +339,25 @@ rs_time = time()-rs_start
 print(f"RandomizedSearchCV took {rs_time:.2f} seconds for {n_iters['RS']} candidates parameter settings")
 
 
-# In[ ]:
+# In[34]:
 
 
 rs = load_from_pkl('RS')
 
 
-# In[ ]:
+# In[25]:
 
 
 report(rs)
 
 
-# In[ ]:
+# In[26]:
 
 
 output_sklearn_to_csv(rs, params_to_be_opt, tag='_RS')
 
 
-# In[ ]:
+# In[27]:
 
 
 plot_convergence(y_values=np.array([-y for y in rs.cv_results_['mean_test_score']]), ann_text='RS', tag='_RS', y_initial=y_initial)
@@ -372,7 +366,7 @@ plot_convergence(y_values=np.array([-y for y in rs.cv_results_['mean_test_score'
 # # Grid Search
 # Try all possible hyperparameter combinations `param_grids`, slow and poor exploration!
 
-# In[ ]:
+# In[28]:
 
 
 gs = GridSearchCV(estimator=xgb_model, param_grid=param_grids, scoring=xgb_early_stopping_auc_scorer,
@@ -380,7 +374,7 @@ gs = GridSearchCV(estimator=xgb_model, param_grid=param_grids, scoring=xgb_early
                  )
 
 
-# In[ ]:
+# In[29]:
 
 
 gs_start = time()
@@ -393,25 +387,25 @@ gs_time = time()-gs_start
 print(f"GridSearchCV took {gs_time:.2f} seconds for {len(gs.cv_results_['params'])} candidates parameter settings")
 
 
-# In[ ]:
+# In[35]:
 
 
 gs = load_from_pkl('GS')
 
 
-# In[ ]:
+# In[31]:
 
 
 report(gs)
 
 
-# In[ ]:
+# In[32]:
 
 
 output_sklearn_to_csv(gs, params_to_be_opt, tag='_GS')
 
 
-# In[ ]:
+# In[33]:
 
 
 plot_convergence(y_values=[-y for y in gs.cv_results_['mean_test_score']], ann_text='GS', tag='_GS', y_initial=y_initial)
@@ -429,7 +423,7 @@ def objective_function(params):
 
     # return the negative auc of the trained model, since Optimizer and hyperopt only minimize
     return -xgb_early_stopping_auc_scorer(model, X_val, y_val)
-# In[ ]:
+# In[19]:
 
 
 # setup the function to be optimized
@@ -448,14 +442,14 @@ def objective_function(params):
 # Use Bayesian optimization to intelligently decide where to sample the objective function next, based on prior results.  
 # Can use many different types of surrogate functions: Gaussian Process, Random Forest, Gradient Boosted Trees. Note that the later Tree-Structured Parzen Estimator (TPE) also uses Bayesian optimization, just with a TPE surrogate in a different optimizer package.
 
-# In[ ]:
+# In[20]:
 
 
 frac_initial_points = 0.1
 acq_func='gp_hedge' # select the best of EI, PI, LCB per iteration
 
 
-# In[ ]:
+# In[21]:
 
 
 def run_bo(bo_opt, bo_n_iter, ann_text, m_path='output', tag='', params_initial=None, y_initial=None, print_interval=5, debug=False):
@@ -569,7 +563,7 @@ def run_bo(bo_opt, bo_n_iter, ann_text, m_path='output', tag='', params_initial=
 
 # ## Gaussian Process Surrogate
 
-# In[ ]:
+# In[37]:
 
 
 # radial basis function + white noise kernel
@@ -580,14 +574,14 @@ bo_gp_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initi
                      )
 
 
-# In[ ]:
+# In[38]:
 
 
 run_bo(bo_gp_opt, bo_n_iter=n_iters['GP'], ann_text='GP', tag='_GP', params_initial=params_initial, y_initial=y_initial, print_interval=50)
 dump_to_pkl(bo_gp_opt, 'GP')
 
 
-# In[ ]:
+# In[22]:
 
 
 bo_gp_opt = load_from_pkl('GP')
@@ -595,7 +589,7 @@ bo_gp_opt = load_from_pkl('GP')
 
 # ## Random Forest Surrogate
 
-# In[ ]:
+# In[23]:
 
 
 bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initial_points*n_iters['RF']), acq_func=acq_func, random_state=rnd_seed+7,
@@ -603,14 +597,14 @@ bo_rf_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_initi
                      )
 
 
-# In[ ]:
+# In[24]:
 
 
 run_bo(bo_rf_opt, bo_n_iter=n_iters['RF'], ann_text='RF', tag='_RF', params_initial=params_initial, y_initial=y_initial, print_interval=50)
 dump_to_pkl(bo_rf_opt, 'RF')
 
 
-# In[ ]:
+# In[25]:
 
 
 bo_rf_opt = load_from_pkl('RF')
@@ -618,7 +612,7 @@ bo_rf_opt = load_from_pkl('RF')
 
 # ## Gradient Boosted Trees Surrogate
 
-# In[ ]:
+# In[26]:
 
 
 gbrt_base_estimator = GradientBoostingQuantileRegressor(
@@ -630,14 +624,14 @@ bo_gbdt_opt = Optimizer(dimensions=dimensions, n_initial_points=np.ceil(frac_ini
                         random_state=rnd_seed+10, base_estimator=gbrt_base_estimator)
 
 
-# In[ ]:
+# In[27]:
 
 
 run_bo(bo_gbdt_opt, bo_n_iter=n_iters['GBDT'], ann_text='GBDT', tag='_GBDT', params_initial=params_initial, y_initial=y_initial, print_interval=50)
 dump_to_pkl(bo_gbdt_opt, 'GBDT')
 
 
-# In[ ]:
+# In[28]:
 
 
 bo_gbdt_opt = load_from_pkl('GBDT')
@@ -646,7 +640,7 @@ bo_gbdt_opt = load_from_pkl('GBDT')
 # # Tree-Structured Parzen Estimator (TPE)
 # Note that hyperopt with TPE can accommodate nested hyperparameter search distributions. See [here](https://towardsdatascience.com/automated-machine-learning-hyperparameter-tuning-in-python-dfda59b72f8a#951b) for an example.
 
-# In[ ]:
+# In[29]:
 
 
 tpe_trials = Trials()
@@ -656,19 +650,19 @@ tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, m
 dump_to_pkl(tpe_trials, 'TPE')
 
 
-# In[ ]:
+# In[30]:
 
 
 tpe_trials = load_from_pkl('TPE')
 
 
-# In[ ]:
+# In[31]:
 
 
 plot_convergence(y_values=tpe_trials.losses(), ann_text='TPE', tag='_TPE', y_initial=y_initial)
 
 
-# In[ ]:
+# In[32]:
 
 
 output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
@@ -677,40 +671,40 @@ output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
 # # Evaluate Performance
 # ### Make evaluation and objective (when possible) plots from skopt
 
-# In[ ]:
+# In[36]:
 
 
 my_plot_evaluations((rs, param_hp_dists), ann_text='RS', tag='_RS', bins=10, dimensions=params_to_be_opt)
 
 
-# In[ ]:
+# In[37]:
 
 
 my_plot_evaluations((gs, param_hp_dists), ann_text='GS', tag='_GS', bins=10, dimensions=params_to_be_opt)
 
 
-# In[ ]:
+# In[38]:
 
 
 my_plot_evaluations(bo_gp_opt, ann_text='GP', tag='_GP', bins=10, dimensions=params_to_be_opt)
 my_plot_objective(bo_gp_opt, ann_text='GP', tag='_GP', dimensions=params_to_be_opt)
 
 
-# In[ ]:
+# In[39]:
 
 
 my_plot_evaluations(bo_rf_opt, ann_text='RF', tag='_RF', bins=10, dimensions=params_to_be_opt)
 my_plot_objective(bo_rf_opt, ann_text='RF', tag='_RF', dimensions=params_to_be_opt) # takes much longer for these partial dependencies
 
 
-# In[ ]:
+# In[40]:
 
 
 my_plot_evaluations(bo_gbdt_opt, ann_text='GBDT', tag='_GBDT', bins=10, dimensions=params_to_be_opt)
 my_plot_objective(bo_gbdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_to_be_opt)
 
 
-# In[ ]:
+# In[41]:
 
 
 my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bins=10, dimensions=params_to_be_opt)
@@ -718,7 +712,7 @@ my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bi
 
 # ### Load best parameters from all optimizers
 
-# In[ ]:
+# In[42]:
 
 
 optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE'] # , 'GA']
@@ -726,15 +720,21 @@ optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE'] # , 'GA']
 df_best_results = combine_best_results(optimizer_abbrevs, params_to_be_opt, params_initial, y_initial, m_path='output')
 
 
-# In[ ]:
+# In[43]:
 
 
 df_best_results
 
 
+# In[49]:
+
+
+df_best_results.to_csv('./output/best_results_all.csv', index=False, na_rep='nan')
+
+
 # ### Evaluate models with the best parameters from each optimizer
 
-# In[ ]:
+# In[44]:
 
 
 def eval_best_models(df_best_results):
@@ -757,7 +757,7 @@ def eval_best_models(df_best_results):
     return best_models
 
 
-# In[ ]:
+# In[45]:
 
 
 best_models = eval_best_models(df_best_results)
