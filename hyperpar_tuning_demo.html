@@ -13017,45 +13017,6 @@ ul.typeahead-list  > li > a.pull-right {
 .highlight .vm { color: #19177C } /* Name.Variable.Magic */
 .highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
     </style>
-<style type="text/css">
-    
-/* Temporary definitions which will become obsolete with Notebook release 5.0 */
-.ansi-black-fg { color: #3E424D; }
-.ansi-black-bg { background-color: #3E424D; }
-.ansi-black-intense-fg { color: #282C36; }
-.ansi-black-intense-bg { background-color: #282C36; }
-.ansi-red-fg { color: #E75C58; }
-.ansi-red-bg { background-color: #E75C58; }
-.ansi-red-intense-fg { color: #B22B31; }
-.ansi-red-intense-bg { background-color: #B22B31; }
-.ansi-green-fg { color: #00A250; }
-.ansi-green-bg { background-color: #00A250; }
-.ansi-green-intense-fg { color: #007427; }
-.ansi-green-intense-bg { background-color: #007427; }
-.ansi-yellow-fg { color: #DDB62B; }
-.ansi-yellow-bg { background-color: #DDB62B; }
-.ansi-yellow-intense-fg { color: #B27D12; }
-.ansi-yellow-intense-bg { background-color: #B27D12; }
-.ansi-blue-fg { color: #208FFB; }
-.ansi-blue-bg { background-color: #208FFB; }
-.ansi-blue-intense-fg { color: #0065CA; }
-.ansi-blue-intense-bg { background-color: #0065CA; }
-.ansi-magenta-fg { color: #D160C4; }
-.ansi-magenta-bg { background-color: #D160C4; }
-.ansi-magenta-intense-fg { color: #A03196; }
-.ansi-magenta-intense-bg { background-color: #A03196; }
-.ansi-cyan-fg { color: #60C6C8; }
-.ansi-cyan-bg { background-color: #60C6C8; }
-.ansi-cyan-intense-fg { color: #258F8F; }
-.ansi-cyan-intense-bg { background-color: #258F8F; }
-.ansi-white-fg { color: #C5C1B4; }
-.ansi-white-bg { background-color: #C5C1B4; }
-.ansi-white-intense-fg { color: #A1A6B2; }
-.ansi-white-intense-bg { background-color: #A1A6B2; }
-
-.ansi-bold { font-weight: bold; }
-
-    </style>
 
 
 <style type="text/css">
@@ -13154,7 +13115,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># import sys</span>
@@ -13168,7 +13129,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># %%bash</span>
@@ -13232,7 +13193,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
@@ -13280,7 +13241,7 @@ div#notebook {
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
 <span class="c1">########################################################</span>
-<span class="c1"># set global rnd_seed for reproducability</span>
+<span class="c1"># set global rnd_seed for reproducibility</span>
 <span class="n">rnd_seed</span> <span class="o">=</span> <span class="mi">42</span>
 </pre></div>
 
@@ -13291,7 +13252,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="o">*</span> <span class="c1"># load some helper functions, but keep main body of code in notebook for easier reading</span>
@@ -13304,7 +13265,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">plotting</span> <span class="k">import</span> <span class="o">*</span> <span class="c1"># load plotting code</span>
@@ -13324,7 +13285,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">n_iters</span> <span class="o">=</span> <span class="p">{</span>
@@ -13337,7 +13298,7 @@ div#notebook {
     <span class="c1"># &#39;GA&#39;: 300, # number of generations</span>
 <span class="p">}</span>
 
-<span class="c1"># all will effectivly be multiplied by n_folds</span>
+<span class="c1"># all will effectively be multiplied by n_folds</span>
 <span class="n">n_folds</span> <span class="o">=</span> <span class="mi">5</span>
 </pre></div>
 
@@ -13362,7 +13323,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
@@ -13387,7 +13348,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">arff</span><span class="o">.</span><span class="n">loadarff</span><span class="p">(</span><span class="s1">&#39;./data/1year.arff&#39;</span><span class="p">)</span>
@@ -13402,7 +13363,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Real feature names, for reference</span>
@@ -13425,7 +13386,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">target</span><span class="o">=</span><span class="s1">&#39;class&#39;</span>
@@ -13447,7 +13408,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">features</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
@@ -13476,7 +13437,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">skf</span> <span class="o">=</span> <span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="n">n_folds</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
@@ -13497,7 +13458,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">all_params</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">({</span>
@@ -13531,7 +13492,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># break out the params_to_be_opt, and their ranges (dimensions), and initial values</span>
@@ -13572,7 +13533,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">fixed_setup_params</span> <span class="o">=</span> <span class="p">{</span>
@@ -13594,7 +13555,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">fixed_fit_params</span> <span class="o">=</span> <span class="p">{</span>
@@ -13619,7 +13580,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">xgb_model</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span>
@@ -13642,7 +13603,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">model_initial</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">XGBClassifier</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span>
@@ -13659,7 +13620,7 @@ See the <a href="https://scikit-learn.org/stable/modules/model_evaluation.html#i
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">y_initial</span> <span class="o">=</span> <span class="o">-</span><span class="n">xgb_early_stopping_auc_scorer</span><span class="p">(</span><span class="n">model_initial</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">y_val</span><span class="p">)</span>
@@ -14051,7 +14012,7 @@ def objective_function(params):
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h1 id="Bayesian-Optimization">Bayesian Optimization<a class="anchor-link" href="#Bayesian-Optimization">&#182;</a></h1><p>Use Bayesian optimization to intelligently decide where to sample the objective function next, based on prior results.<br>
-Can use many different types of surrogate functions: Gaussian Process, Random Forest, Gradient Boosted Trees. Note that the later Tree-Structured Parzen Estimator (TPE) also uses Bayesian optimization, just with a TPE surrogate in a different optimizer package.</p>
+Can use many different types of surrogate functions: Gaussian Process, Random Forest, Gradient Boosted Trees. Note that the Tree-Structured Parzen Estimator (TPE) approach is a close cousin of Bayesian optimization, similar in operation but arising from a flipped form of Bayes rule.</p>
 
 </div>
 </div>
@@ -14510,7 +14471,7 @@ Initial y: -0.94575
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">tpe_trials</span> <span class="o">=</span> <span class="n">Trials</span><span class="p">()</span>
 
 <span class="n">tpe_best</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">space</span><span class="o">=</span><span class="n">param_hp_dists</span><span class="p">,</span> <span class="n">algo</span><span class="o">=</span><span class="n">tpe</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span> <span class="n">max_evals</span><span class="o">=</span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">],</span>
-                <span class="n">trials</span><span class="o">=</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">rstate</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">11</span><span class="p">))</span>
+                <span class="n">trials</span><span class="o">=</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">rstate</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">rnd_seed</span><span class="o">+</span><span class="mi">11</span><span class="p">))</span>
 <span class="n">dump_to_pkl</span><span class="p">(</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="s1">&#39;TPE&#39;</span><span class="p">)</span>
 </pre></div>
 
@@ -14569,6 +14530,214 @@ Initial y: -0.94575
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_hyperopt_to_csv</span><span class="p">(</span><span class="n">tpe_trials</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_TPE&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Genetic-Algorithm">Genetic Algorithm<a class="anchor-link" href="#Genetic-Algorithm">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Eventual-TODOs">Eventual TODOs<a class="anchor-link" href="#Eventual-TODOs">&#182;</a></h4><ul>
+<li>Multithreading</li>
+<li>Set random seed, but would require a careful rewrite of gentun</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gentun</span> <span class="k">import</span> <span class="n">GeneticAlgorithm</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">GridPopulation</span><span class="p">,</span> <span class="n">XgboostIndividual</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div># Generate a grid of individuals as the initial population
+# Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
+# large computation, requires working multithreading / distributed computing
+pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
+                     additional_parameters={'kfold': n_folds,
+                                            'objective': fixed_setup_params['xgb_objective'],
+                                            'eval_metric': fixed_fit_params['eval_metric'],
+                                            'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
+                                            'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
+                                            'folds': skf, # stratified kfolds from sklearn
+                                            'verbose_eval': fixed_fit_params['verbose'],
+                                           },
+                     crossover_rate=0.5, mutation_rate=0.02, maximize=True)
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># proof of concept code, turn off kfolds, run a low number of iterations</span>
+<span class="c1"># Generate a random sample of 25 individuals as the initial population</span>
+<span class="n">pop</span> <span class="o">=</span> <span class="n">Population</span><span class="p">(</span><span class="n">XgboostIndividual</span><span class="p">,</span> <span class="n">X_trainCV</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span>
+                 <span class="n">size</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+                 <span class="n">additional_parameters</span><span class="o">=</span><span class="p">{</span><span class="c1"># &#39;kfold&#39;: n_folds,</span>
+                                        <span class="s1">&#39;objective&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">],</span>
+                                        <span class="s1">&#39;eval_metric&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span>
+                                        <span class="s1">&#39;num_boost_round&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span>
+                                        <span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span>
+                                        <span class="c1"># &#39;folds&#39;: skf, # stratified kfolds from sklearn</span>
+                                        <span class="s1">&#39;verbose_eval&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">],</span>
+                                       <span class="p">},</span>
+                 <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Initializing a random population. Size: 25
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga</span> <span class="o">=</span> <span class="n">GeneticAlgorithm</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">tournament_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">elitism</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[35]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[36]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Starting genetic algorithm...
+
+Evaluating generation #1...
+Evaluating generation #2...
+Evaluating generation #3...
+Evaluating generation #4...
+Evaluating generation #5...
+Evaluating generation #6...
+Evaluating generation #7...
+Evaluating generation #8...
+Evaluating generation #9...
+Evaluating generation #10...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga_results</span><span class="p">[[</span><span class="s1">&#39;generation&#39;</span><span class="p">,</span> <span class="s1">&#39;best_fitness&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">params_to_be_opt</span><span class="p">]</span>
+<span class="n">dump_to_pkl</span><span class="p">(</span><span class="n">ga_results</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">)</span> <span class="c1"># is just a df, but might as well still pkl to be consistent</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="o">=</span> <span class="n">load_from_pkl</span><span class="p">(</span><span class="s1">&#39;GA&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_convergence</span><span class="p">(</span><span class="n">y_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">ga_results</span><span class="p">[</span><span class="s1">&#39;best_fitness&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()]),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_gentun_to_csv</span><span class="p">(</span><span class="n">ga_results</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -14664,6 +14833,19 @@ Initial y: -0.94575
 </div>
 
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">((</span><span class="n">ga_results</span><span class="p">,</span> <span class="n">param_hp_dists</span><span class="p">),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -14676,7 +14858,7 @@ Initial y: -0.94575
 <div class="prompt input_prompt">In&nbsp;[42]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">optimizer_abbrevs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;RS&#39;</span><span class="p">,</span> <span class="s1">&#39;GS&#39;</span><span class="p">,</span> <span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;TPE&#39;</span><span class="p">]</span> <span class="c1"># , &#39;GA&#39;]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">optimizer_abbrevs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;RS&#39;</span><span class="p">,</span> <span class="s1">&#39;GS&#39;</span><span class="p">,</span> <span class="s1">&#39;GP&#39;</span><span class="p">,</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">]</span>
 
 <span class="n">df_best_results</span> <span class="o">=</span> <span class="n">combine_best_results</span><span class="p">(</span><span class="n">optimizer_abbrevs</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">params_initial</span><span class="p">,</span> <span class="n">y_initial</span><span class="p">,</span> <span class="n">m_path</span><span class="o">=</span><span class="s1">&#39;output&#39;</span><span class="p">)</span>
 </pre></div>
@@ -14740,7 +14922,19 @@ Initial y: -0.94575
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
+      <td>0</td>
+      <td>GA</td>
+      <td>-0.953364</td>
+      <td>-0.804952</td>
+      <td>0.953364</td>
+      <td>5</td>
+      <td>0.181400</td>
+      <td>0.000200</td>
+      <td>0.000000</td>
+      <td>0.356300</td>
+    </tr>
+    <tr>
+      <td>1</td>
       <td>GP</td>
       <td>-0.949342</td>
       <td>-0.379681</td>
@@ -14752,7 +14946,7 @@ Initial y: -0.94575
       <td>0.034875</td>
     </tr>
     <tr>
-      <th>1</th>
+      <td>2</td>
       <td>RF</td>
       <td>-0.948440</td>
       <td>-0.284371</td>
@@ -14764,7 +14958,7 @@ Initial y: -0.94575
       <td>0.082629</td>
     </tr>
     <tr>
-      <th>2</th>
+      <td>3</td>
       <td>GBDT</td>
       <td>-0.946002</td>
       <td>-0.026607</td>
@@ -14776,7 +14970,7 @@ Initial y: -0.94575
       <td>0.007518</td>
     </tr>
     <tr>
-      <th>3</th>
+      <td>4</td>
       <td>TPE</td>
       <td>-0.945994</td>
       <td>-0.025677</td>
@@ -14788,7 +14982,7 @@ Initial y: -0.94575
       <td>1.214715</td>
     </tr>
     <tr>
-      <th>4</th>
+      <td>5</td>
       <td>Initial</td>
       <td>-0.945751</td>
       <td>-0.000000</td>
@@ -14800,7 +14994,7 @@ Initial y: -0.94575
       <td>1.000000</td>
     </tr>
     <tr>
-      <th>5</th>
+      <td>6</td>
       <td>GS</td>
       <td>-0.943294</td>
       <td>0.259779</td>
@@ -14812,7 +15006,7 @@ Initial y: -0.94575
       <td>1.000000</td>
     </tr>
     <tr>
-      <th>6</th>
+      <td>7</td>
       <td>RS</td>
       <td>-0.941950</td>
       <td>0.401842</td>
@@ -14836,7 +15030,7 @@ Initial y: -0.94575
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[49]:</div>
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_best_results</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;./output/best_results_all.csv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">na_rep</span><span class="o">=</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
@@ -14856,7 +15050,7 @@ Initial y: -0.94575
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">eval_best_models</span><span class="p">(</span><span class="n">df_best_results</span><span class="p">):</span>
@@ -14886,7 +15080,7 @@ Initial y: -0.94575
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">best_models</span> <span class="o">=</span> <span class="n">eval_best_models</span><span class="p">(</span><span class="n">df_best_results</span><span class="p">)</span>
@@ -14906,7 +15100,7 @@ Initial y: -0.94575
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">models_for_roc</span><span class="o">=</span> <span class="p">[</span>
@@ -14917,7 +15111,7 @@ Initial y: -0.94575
     <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;RF&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;RF&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;RF&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C3&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;:&#39;</span><span class="p">},</span>
     <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;GBDT&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GBDT&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GBDT&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C4&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">},</span>
     <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;TPE&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;TPE&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C5&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;-.&#39;</span><span class="p">},</span>
-    <span class="c1"># {&#39;name&#39;: &#39;GA&#39;, &#39;nname&#39;: &#39;GA&#39;, &#39;fpr&#39;: best_models[&#39;GA&#39;][&#39;fpr&#39;], &#39;tpr&#39;: best_models[&#39;GA&#39;][&#39;tpr&#39;], &#39;c&#39;: &#39;C6&#39;, &#39;ls&#39;: &#39;--&#39;},</span>
+    <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="s1">&#39;nname&#39;</span><span class="p">:</span> <span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="s1">&#39;fpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">][</span><span class="s1">&#39;fpr&#39;</span><span class="p">],</span> <span class="s1">&#39;tpr&#39;</span><span class="p">:</span> <span class="n">best_models</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">][</span><span class="s1">&#39;tpr&#39;</span><span class="p">],</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">},</span>
 <span class="p">]</span>
 </pre></div>
 
@@ -14928,7 +15122,7 @@ Initial y: -0.94575
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_rocs</span><span class="p">(</span><span class="n">models_for_roc</span><span class="p">,</span> <span class="n">rndGuess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inverse_log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -14949,7 +15143,7 @@ Initial y: -0.94575
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">best_models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -15000,196 +15194,6 @@ Initial y: -0.94575
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Genetic-Algorithm">Genetic Algorithm<a class="anchor-link" href="#Genetic-Algorithm">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Eventual-TODOs">Eventual TODOs<a class="anchor-link" href="#Eventual-TODOs">&#182;</a></h4><ul>
-<li>Multithreading</li>
-<li>Set random seed, but would require a careful rewrite of gentun</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gentun</span> <span class="k">import</span> <span class="n">GeneticAlgorithm</span><span class="p">,</span> <span class="n">GridPopulation</span><span class="p">,</span> <span class="n">XgboostIndividual</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Generate a grid of individuals as the initial population</span>
-<span class="c1"># Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search</span>
-<span class="n">pop</span> <span class="o">=</span> <span class="n">GridPopulation</span><span class="p">(</span><span class="n">XgboostIndividual</span><span class="p">,</span> <span class="n">X_trainCV</span><span class="p">,</span> <span class="n">y_trainCV</span><span class="p">,</span> <span class="n">genes_grid</span><span class="o">=</span><span class="n">param_grids</span><span class="p">,</span>
-                     <span class="n">additional_parameters</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;kfold&#39;</span><span class="p">:</span> <span class="n">n_folds</span><span class="p">,</span>
-                                            <span class="s1">&#39;objective&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;xgb_objective&#39;</span><span class="p">],</span>
-                                            <span class="s1">&#39;eval_metric&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;eval_metric&#39;</span><span class="p">],</span>
-                                            <span class="s1">&#39;num_boost_round&#39;</span><span class="p">:</span> <span class="n">fixed_setup_params</span><span class="p">[</span><span class="s1">&#39;max_num_boost_rounds&#39;</span><span class="p">],</span>
-                                            <span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;early_stopping_rounds&#39;</span><span class="p">],</span>
-                                            <span class="s1">&#39;folds&#39;</span><span class="p">:</span> <span class="n">skf</span><span class="p">,</span> <span class="c1"># stratified kfolds from sklearn</span>
-                                            <span class="s1">&#39;verbose_eval&#39;</span><span class="p">:</span> <span class="n">fixed_fit_params</span><span class="p">[</span><span class="s1">&#39;verbose&#39;</span><span class="p">],</span>
-                                           <span class="p">},</span>
-                     <span class="n">crossover_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">ga</span> <span class="o">=</span> <span class="n">GeneticAlgorithm</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">tournament_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">elitism</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">n_iters</span><span class="p">[</span><span class="s1">&#39;GA&#39;</span><span class="p">])</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-<span class="n">ga_results</span> <span class="o">=</span> <span class="n">ga_results</span><span class="p">[[</span><span class="s1">&#39;generation&#39;</span><span class="p">,</span> <span class="s1">&#39;best_fitness&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">params_to_be_opt</span><span class="p">]</span>
-<span class="n">dump_to_pkl</span><span class="p">(</span><span class="n">ga_results</span><span class="p">,</span> <span class="s1">&#39;GA&#39;</span><span class="p">)</span> <span class="c1"># is just a df, but might as well still pkl to be consistent</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results_new</span> <span class="o">=</span> <span class="n">load_from_pkl</span><span class="p">(</span><span class="s1">&#39;GA&#39;</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ga_results_new</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># requires testing</span>
-<span class="k">assert</span> <span class="n">ga_results_new</span> <span class="o">==</span> <span class="n">ga_results</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">my_plot_evaluations</span><span class="p">((</span><span class="n">ga_results</span><span class="p">,</span> <span class="n">param_hp_dists</span><span class="p">),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">params_to_be_opt</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_convergence</span><span class="p">(</span><span class="n">y_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">ga_results</span><span class="p">[</span><span class="s1">&#39;best_fitness&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()]),</span> <span class="n">ann_text</span><span class="o">=</span><span class="s1">&#39;GA&#39;</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">,</span> <span class="n">y_initial</span><span class="o">=</span><span class="n">y_initial</span><span class="p">)</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">output_gentun_to_csv</span><span class="p">(</span><span class="n">ga_results</span><span class="p">,</span> <span class="n">params_to_be_opt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s1">&#39;_GA&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>

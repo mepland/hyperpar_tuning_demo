@@ -21,14 +21,14 @@ get_ipython().system('{sys.executable} -m pip install -r requirements.txt')
 # !{sys.executable} -m pip install -r gentun/requirements.txt
 
 
-# In[2]:
+# In[ ]:
 
 
 # import sys
 # !{sys.executable} -m pip uninstall --yes gentun
 
 
-# In[3]:
+# In[ ]:
 
 
 # %%bash
@@ -47,7 +47,7 @@ multiprocessing.cpu_count()
 
 # ### Load packages!
 
-# In[2]:
+# In[1]:
 
 
 get_ipython().run_line_magic('load_ext', 'autoreload')
@@ -95,17 +95,17 @@ import matplotlib.pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 ########################################################
-# set global rnd_seed for reproducability
+# set global rnd_seed for reproducibility
 rnd_seed = 42
 
 
-# In[3]:
+# In[2]:
 
 
 from utils import * # load some helper functions, but keep main body of code in notebook for easier reading
 
 
-# In[4]:
+# In[3]:
 
 
 from plotting import * # load plotting code
@@ -113,7 +113,7 @@ from plotting import * # load plotting code
 
 # ### Set number of iterations
 
-# In[5]:
+# In[4]:
 
 
 n_iters = {
@@ -126,7 +126,7 @@ n_iters = {
     # 'GA': 300, # number of generations
 }
 
-# all will effectivly be multiplied by n_folds
+# all will effectively be multiplied by n_folds
 n_folds = 5
 
 # for testing lower iterations and folds
@@ -138,7 +138,7 @@ n_folds = 2
 # Need to implement our own custom scorer to actually use the best number of trees found by early stopping.
 # See the [documentation](https://scikit-learn.org/stable/modules/model_evaluation.html#implementing-your-own-scoring-object) for details.
 
-# In[6]:
+# In[5]:
 
 
 def xgb_early_stopping_auc_scorer(model, X, y):
@@ -152,7 +152,7 @@ def xgb_early_stopping_auc_scorer(model, X, y):
 # ## Load Polish Companies Bankruptcy Data
 # ### [Source and data dictionary](http://archive.ics.uci.edu/ml/datasets/Polish+companies+bankruptcy+data)
 
-# In[7]:
+# In[6]:
 
 
 data = arff.loadarff('./data/1year.arff')
@@ -160,7 +160,7 @@ df = pd.DataFrame(data[0])
 df['class'] = df['class'].apply(int, args=(2,))
 
 
-# In[8]:
+# In[7]:
 
 
 # Real feature names, for reference
@@ -170,7 +170,7 @@ with open ('./attrs.json') as json_file:
 
 # Setup Target and Features
 
-# In[9]:
+# In[8]:
 
 
 target='class'
@@ -179,7 +179,7 @@ features = sorted(list(set(df.columns)-set([target])))
 
 # Make Train, Validation, and Holdout Sets
 
-# In[10]:
+# In[9]:
 
 
 X = df[features].values
@@ -195,7 +195,7 @@ X_train, X_val, y_train, y_val = train_test_split(X_trainCV, y_trainCV, test_siz
 
 # Prepare Stratified k-Folds
 
-# In[11]:
+# In[10]:
 
 
 skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
@@ -204,7 +204,7 @@ skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=rnd_seed+2)
 # ## Setup Hyperparameter Search Space
 # See the [docs here](https://xgboost.readthedocs.io/en/latest/parameter.html) for XGBoost hyperparameter details.
 
-# In[12]:
+# In[11]:
 
 
 all_params = OrderedDict({
@@ -231,7 +231,7 @@ all_params = OrderedDict({
 })
 
 
-# In[13]:
+# In[12]:
 
 
 # break out the params_to_be_opt, and their ranges (dimensions), and initial values
@@ -260,7 +260,7 @@ for iparam, param in enumerate(params_to_be_opt):
 
 # #### Set other fixed hyperparameters
 
-# In[14]:
+# In[13]:
 
 
 fixed_setup_params = {
@@ -275,7 +275,7 @@ search_n_jobs = -1 # Number of parallel threads used to run hyperparameter searc
 search_verbosity = 1
 
 
-# In[15]:
+# In[14]:
 
 
 fixed_fit_params = {
@@ -288,7 +288,7 @@ fixed_fit_params = {
 
 # ### Setup XGBClassifier
 
-# In[16]:
+# In[15]:
 
 
 xgb_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
@@ -299,7 +299,7 @@ xgb_model = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rou
 
 # #### Run with initial hyperparameters as a baseline
 
-# In[17]:
+# In[16]:
 
 
 model_initial = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost_rounds'],
@@ -309,7 +309,7 @@ model_initial = xgb.XGBClassifier(n_estimators=fixed_setup_params['max_num_boost
 model_initial.fit(X_train, y_train, **fixed_fit_params);
 
 
-# In[18]:
+# In[17]:
 
 
 y_initial = -xgb_early_stopping_auc_scorer(model_initial, X_val, y_val)
@@ -440,7 +440,7 @@ def objective_function(params):
 
 # # Bayesian Optimization
 # Use Bayesian optimization to intelligently decide where to sample the objective function next, based on prior results.  
-# Can use many different types of surrogate functions: Gaussian Process, Random Forest, Gradient Boosted Trees. Note that the later Tree-Structured Parzen Estimator (TPE) also uses Bayesian optimization, just with a TPE surrogate in a different optimizer package.
+# Can use many different types of surrogate functions: Gaussian Process, Random Forest, Gradient Boosted Trees. Note that the Tree-Structured Parzen Estimator (TPE) approach is a close cousin of Bayesian optimization, similar in operation but arising from a flipped form of Bayes rule.
 
 # In[20]:
 
@@ -646,7 +646,7 @@ bo_gbdt_opt = load_from_pkl('GBDT')
 tpe_trials = Trials()
 
 tpe_best = fmin(fn=objective_function, space=param_hp_dists, algo=tpe.suggest, max_evals=n_iters['TPE'],
-                trials=tpe_trials, rstate= np.random.RandomState(rnd_seed+11))
+                trials=tpe_trials, rstate=np.random.RandomState(rnd_seed+11))
 dump_to_pkl(tpe_trials, 'TPE')
 
 
@@ -666,6 +666,92 @@ plot_convergence(y_values=tpe_trials.losses(), ann_text='TPE', tag='_TPE', y_ini
 
 
 output_hyperopt_to_csv(tpe_trials, params_to_be_opt, tag='_TPE')
+
+
+# # Genetic Algorithm
+
+# #### Eventual TODOs
+# * Multithreading
+# * Set random seed, but would require a careful rewrite of gentun
+
+# In[23]:
+
+
+from gentun import GeneticAlgorithm, Population, GridPopulation, XgboostIndividual
+
+# Generate a grid of individuals as the initial population
+# Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
+# large computation, requires working multithreading / distributed computing
+pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
+                     additional_parameters={'kfold': n_folds,
+                                            'objective': fixed_setup_params['xgb_objective'],
+                                            'eval_metric': fixed_fit_params['eval_metric'],
+                                            'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
+                                            'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
+                                            'folds': skf, # stratified kfolds from sklearn
+                                            'verbose_eval': fixed_fit_params['verbose'],
+                                           },
+                     crossover_rate=0.5, mutation_rate=0.02, maximize=True)
+# In[33]:
+
+
+# proof of concept code, turn off kfolds, run a low number of iterations
+# Generate a random sample of 25 individuals as the initial population
+pop = Population(XgboostIndividual, X_trainCV, y_trainCV,
+                 size=25,
+                 additional_parameters={# 'kfold': n_folds,
+                                        'objective': fixed_setup_params['xgb_objective'],
+                                        'eval_metric': fixed_fit_params['eval_metric'],
+                                        'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
+                                        'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
+                                        # 'folds': skf, # stratified kfolds from sklearn
+                                        'verbose_eval': fixed_fit_params['verbose'],
+                                       },
+                 crossover_rate=0.5, mutation_rate=0.05, maximize=True)
+
+
+# In[34]:
+
+
+ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbosity=1)
+
+
+# In[35]:
+
+
+n_iters['GA'] = 10
+
+
+# In[36]:
+
+
+ga.run(n_iters['GA'])
+
+
+# In[37]:
+
+
+ga_results = ga.get_results()
+ga_results = ga_results[['generation', 'best_fitness']+params_to_be_opt]
+dump_to_pkl(ga_results, 'GA') # is just a df, but might as well still pkl to be consistent
+
+
+# In[38]:
+
+
+ga_results = load_from_pkl('GA')
+
+
+# In[40]:
+
+
+plot_convergence(y_values=np.array([-y for y in ga_results['best_fitness'].to_list()]), ann_text='GA', tag='_GA', y_initial=y_initial)
+
+
+# In[41]:
+
+
+output_gentun_to_csv(ga_results, params_to_be_opt, tag='_GA')
 
 
 # # Evaluate Performance
@@ -710,12 +796,18 @@ my_plot_objective(bo_gbdt_opt, ann_text='GBDT', tag='_GBDT', dimensions=params_t
 my_plot_evaluations((tpe_trials, param_hp_dists), ann_text='TPE', tag='_TPE', bins=10, dimensions=params_to_be_opt)
 
 
+# In[39]:
+
+
+my_plot_evaluations((ga_results, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
+
+
 # ### Load best parameters from all optimizers
 
 # In[42]:
 
 
-optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE'] # , 'GA']
+optimizer_abbrevs = ['RS', 'GS', 'GP', 'RF', 'GBDT', 'TPE', 'GA']
 
 df_best_results = combine_best_results(optimizer_abbrevs, params_to_be_opt, params_initial, y_initial, m_path='output')
 
@@ -726,7 +818,7 @@ df_best_results = combine_best_results(optimizer_abbrevs, params_to_be_opt, para
 df_best_results
 
 
-# In[49]:
+# In[44]:
 
 
 df_best_results.to_csv('./output/best_results_all.csv', index=False, na_rep='nan')
@@ -734,7 +826,7 @@ df_best_results.to_csv('./output/best_results_all.csv', index=False, na_rep='nan
 
 # ### Evaluate models with the best parameters from each optimizer
 
-# In[44]:
+# In[45]:
 
 
 def eval_best_models(df_best_results):
@@ -757,7 +849,7 @@ def eval_best_models(df_best_results):
     return best_models
 
 
-# In[45]:
+# In[46]:
 
 
 best_models = eval_best_models(df_best_results)
@@ -765,7 +857,7 @@ best_models = eval_best_models(df_best_results)
 
 # ### Plot ROC curves
 
-# In[ ]:
+# In[47]:
 
 
 models_for_roc= [
@@ -776,11 +868,11 @@ models_for_roc= [
     {'name': 'RF', 'nname': 'RF', 'fpr': best_models['RF']['fpr'], 'tpr': best_models['RF']['tpr'], 'c': 'C3', 'ls': ':'},
     {'name': 'GBDT', 'nname': 'GBDT', 'fpr': best_models['GBDT']['fpr'], 'tpr': best_models['GBDT']['tpr'], 'c': 'C4', 'ls': '--'},
     {'name': 'TPE', 'nname': 'TPE', 'fpr': best_models['TPE']['fpr'], 'tpr': best_models['TPE']['tpr'], 'c': 'C5', 'ls': '-.'},
-    # {'name': 'GA', 'nname': 'GA', 'fpr': best_models['GA']['fpr'], 'tpr': best_models['GA']['tpr'], 'c': 'C6', 'ls': '--'},
+    {'name': 'GA', 'nname': 'GA', 'fpr': best_models['GA']['fpr'], 'tpr': best_models['GA']['tpr'], 'c': 'C6', 'ls': '--'},
 ]
 
 
-# In[ ]:
+# In[48]:
 
 
 plot_rocs(models_for_roc, rndGuess=True, inverse_log=False, inline=False)
@@ -789,7 +881,7 @@ plot_rocs(models_for_roc, rndGuess=False, inverse_log=True, tag='_inverse_log', 
 
 # ### Plot $\hat{y}$ predictions
 
-# In[ ]:
+# In[49]:
 
 
 for k,v in best_models.items():
@@ -814,98 +906,4 @@ from plotting import *
 
 
 
-
-
-# # Genetic Algorithm
-
-# #### Eventual TODOs
-# * Multithreading
-# * Set random seed, but would require a careful rewrite of gentun
-
-# In[ ]:
-
-
-from gentun import GeneticAlgorithm, GridPopulation, XgboostIndividual
-
-
-# In[ ]:
-
-
-# Generate a grid of individuals as the initial population
-# Use the same grid as in the sklearn grid search, and the first generation will be the same as that grid search
-pop = GridPopulation(XgboostIndividual, X_trainCV, y_trainCV, genes_grid=param_grids,
-                     additional_parameters={'kfold': n_folds,
-                                            'objective': fixed_setup_params['xgb_objective'],
-                                            'eval_metric': fixed_fit_params['eval_metric'],
-                                            'num_boost_round': fixed_setup_params['max_num_boost_rounds'],
-                                            'early_stopping_rounds': fixed_fit_params['early_stopping_rounds'],
-                                            'folds': skf, # stratified kfolds from sklearn
-                                            'verbose_eval': fixed_fit_params['verbose'],
-                                           },
-                     crossover_rate=0.5, mutation_rate=0.02, maximize=True)
-
-ga = GeneticAlgorithm(pop, tournament_size=5, elitism=True, verbosity=1)
-
-
-# In[ ]:
-
-
-n_iters['GA'] = 1
-
-
-# In[ ]:
-
-
-ga.run(n_iters['GA'])
-
-
-# In[ ]:
-
-
-ga_results = ga.get_results()
-ga_results = ga_results[['generation', 'best_fitness']+params_to_be_opt]
-dump_to_pkl(ga_results, 'GA') # is just a df, but might as well still pkl to be consistent
-
-
-# In[ ]:
-
-
-ga_results_new = load_from_pkl('GA')
-
-
-# In[ ]:
-
-
-ga_results
-
-
-# In[ ]:
-
-
-ga_results_new
-
-
-# In[ ]:
-
-
-# requires testing
-assert ga_results_new == ga_results
-
-
-# In[ ]:
-
-
-my_plot_evaluations((ga_results, param_hp_dists), ann_text='GA', tag='_GA', bins=10, dimensions=params_to_be_opt)
-
-
-# In[ ]:
-
-
-plot_convergence(y_values=np.array([-y for y in ga_results['best_fitness'].to_list()]), ann_text='GA', tag='_GA', y_initial=y_initial)
-
-
-# In[ ]:
-
-
-output_gentun_to_csv(ga_results, params_to_be_opt, tag='_GA')
 
