@@ -1,0 +1,4 @@
+# ignore all html in diffs and github languages stats
+*.html linguist-generated=true
+# ignore specific .py files linked to jupyter notebooks in github languages stats
+hyperpar_tuning_demo.py linguist-documentation=true
